@@ -1,0 +1,324 @@
+/* Cores */
+:root {
+    --primary-color: #007bff; /* Azul para botões/links */
+    --success-color: #4CAF50; /* Verde para receitas */
+    --danger-color: #FF5722; /* Laranja para despesas */
+    --background-light: #f4f4f4;
+    --text-dark: #333333;
+    --card-background: #ffffff;
+    --border-color: #cccccc;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-light);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 1.8em;
+}
+
+.header nav .btn {
+    background-color: transparent;
+    border: 1px solid white;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.header nav .btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Botões genéricos */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #45a049;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #d1401a;
+}
+
+/* Seções */
+section {
+    background-color: var(--card-background);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 25px;
+}
+
+h2 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Overview Cards */
+.overview-cards {
+    display: flex;
+    justify-content: space-around;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.overview-cards .card {
+    background-color: var(--background-light);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    min-width: 250px;
+    flex: 1;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.overview-cards .card h3 {
+    margin-top: 0;
+    font-size: 1.2em;
+    color: var(--text-dark);
+}
+
+.overview-cards .card p {
+    font-size: 2em;
+    font-weight: bold;
+    margin: 10px 0 0;
+}
+
+.income-card p { color: var(--success-color); }
+.expense-card p { color: var(--danger-color); }
+.balance-card p { color: var(--primary-color); }
+
+
+/* Formulário de Transação (Modal) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: var(--card-background);
+    margin: auto;
+    padding: 30px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group select {
+    width: calc(100% - 20px);
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+/* Lista de Transações */
+.transaction-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--card-background);
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-item .description {
+    flex-grow: 1;
+    font-weight: bold;
+}
+
+.transaction-item .amount {
+    font-weight: bold;
+    margin-left: 20px;
+    text-align: right;
+    min-width: 100px;
+}
+
+.transaction-item.income .amount {
+    color: var(--success-color);
+}
+
+.transaction-item.expense .amount {
+    color: var(--danger-color);
+}
+
+.transaction-item .date {
+    font-size: 0.9em;
+    color: #666;
+    margin-left: 15px;
+    min-width: 90px;
+    text-align: right;
+}
+
+.transaction-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: 20px;
+}
+
+.transaction-actions button {
+    padding: 6px 12px;
+    font-size: 0.85em;
+}
+
+/* Filtro e Ordenação */
+.filter-sort {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.filter-sort input,
+.filter-sort select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9em;
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Responsividade Básica */
+@media (max-width: 768px) {
+    .header .container {
+        flex-direction: column;
+        text-align: center;
+    }
+    .header h1 {
+        margin-bottom: 10px;
+    }
+    .overview-cards {
+        flex-direction: column;
+    }
+    .transaction-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .transaction-item .amount,
+    .transaction-item .date {
+        margin-left: 0;
+        margin-top: 5px;
+    }
+    .transaction-actions {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    .filter-sort {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
