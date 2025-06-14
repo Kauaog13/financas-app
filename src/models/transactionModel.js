@@ -1,17 +1,21 @@
 const pool = require('../config/db');
 
 class TransactionModel {
-    static async createTransaction(userId, description, amount, type, date) {
+    static async createTransaction(userId, description, amount, type, date, categoryId) {
         const [result] = await pool.execute(
-            'INSERT INTO transactions (user_id, description, amount, type, date) VALUES (?, ?, ?, ?, ?)',
-            [userId, description, amount, type, date]
+            'INSERT INTO transactions (user_id, description, amount, type, date, category_id) VALUES (?, ?, ?, ?, ?, ?)',
+            [userId, description, amount, type, date, categoryId]
         );
         return result.insertId;
     }
 
     static async getTransactionsByUserId(userId) {
         const [rows] = await pool.execute(
-            'SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC, created_at DESC',
+            `SELECT t.*, c.name AS category_name
+             FROM transactions t
+             LEFT JOIN categories c ON t.category_id = c.id
+             WHERE t.user_id = ?
+             ORDER BY t.date DESC, t.created_at DESC`,
             [userId]
         );
         return rows;
@@ -19,16 +23,19 @@ class TransactionModel {
 
     static async getTransactionById(transactionId, userId) {
         const [rows] = await pool.execute(
-            'SELECT * FROM transactions WHERE id = ? AND user_id = ?',
+            `SELECT t.*, c.name AS category_name
+             FROM transactions t
+             LEFT JOIN categories c ON t.category_id = c.id
+             WHERE t.id = ? AND t.user_id = ?`,
             [transactionId, userId]
         );
         return rows[0];
     }
 
-    static async updateTransaction(transactionId, userId, description, amount, type, date) {
+    static async updateTransaction(transactionId, userId, description, amount, type, date, categoryId) {
         const [result] = await pool.execute(
-            'UPDATE transactions SET description = ?, amount = ?, type = ?, date = ? WHERE id = ? AND user_id = ?',
-            [description, amount, type, date, transactionId, userId]
+            'UPDATE transactions SET description = ?, amount = ?, type = ?, date = ?, category_id = ? WHERE id = ? AND user_id = ?',
+            [description, amount, type, date, categoryId, transactionId, userId]
         );
         return result.affectedRows > 0;
     }

@@ -43,9 +43,9 @@ exports.login = async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, username: user.username, email: user.email },
+            { id: user.id, username: user.username, email: user.email, role: user.role },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' } // Token expira em 1 hora
+            { expiresIn: '1h' }
         );
 
         res.status(200).json({ message: 'Login bem-sucedido!', token });
@@ -56,6 +56,5 @@ exports.login = async (req, res) => {
 };
 
 exports.verifyToken = (req, res) => {
-    // Se o middleware authenticateToken passou, significa que o token é válido
     res.status(200).json({ message: 'Token válido', user: req.user });
 };

@@ -3,7 +3,6 @@ const financeController = require('../controllers/financeController');
 const authenticateToken = require('../middlewares/authMiddleware');
 const router = express.Router();
 
-// Todas as rotas de finanças são protegidas
 router.post('/transactions', authenticateToken, financeController.createTransaction);
 router.get('/transactions', authenticateToken, financeController.getTransactions);
 router.get('/transactions/:id', authenticateToken, financeController.getTransactionById);

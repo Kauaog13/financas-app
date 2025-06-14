@@ -1,12 +1,11 @@
 const TransactionModel = require('../models/transactionModel');
 
-// Criar uma nova transação
 exports.createTransaction = async (req, res) => {
-    const { description, amount, type, date } = req.body;
-    const userId = req.user.id; // ID do usuário do token JWT
+    const { description, amount, type, date, category_id } = req.body;
+    const userId = req.user.id;
 
     if (!description || !amount || !type || !date) {
-        return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+        return res.status(400).json({ message: 'Campos de descrição, valor, tipo e data são obrigatórios.' });
     }
     if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
         return res.status(400).json({ message: 'Valor deve ser um número positivo.' });
@@ -14,9 +13,14 @@ exports.createTransaction = async (req, res) => {
     if (!['income', 'expense'].includes(type)) {
         return res.status(400).json({ message: 'Tipo de transação inválido. Deve ser "income" ou "expense".' });
     }
+    // category_id pode ser opcional (null no DB), mas se existir, deve ser um número válido
+    if (category_id !== null && isNaN(parseInt(category_id))) { // Verifica se não é null E não é um número
+        return res.status(400).json({ message: 'ID da categoria inválido.' });
+    }
 
     try {
-        const newTransactionId = await TransactionModel.createTransaction(userId, description, amount, type, date);
+        // Usa category_id diretamente (já tratado para ser null ou number no frontend)
+        const newTransactionId = await TransactionModel.createTransaction(userId, description, amount, type, date, category_id);
         res.status(201).json({ message: 'Transação criada com sucesso!', id: newTransactionId });
     } catch (error) {
         console.error('Erro ao criar transação:', error);
@@ -24,7 +28,6 @@ exports.createTransaction = async (req, res) => {
     }
 };
 
-// Obter todas as transações de um usuário
 exports.getTransactions = async (req, res) => {
     const userId = req.user.id;
 
@@ -37,7 +40,6 @@ exports.getTransactions = async (req, res) => {
     }
 };
 
-// Obter uma transação específica por ID
 exports.getTransactionById = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
@@ -54,14 +56,13 @@ exports.getTransactionById = async (req, res) => {
     }
 };
 
-// Atualizar uma transação existente
 exports.updateTransaction = async (req, res) => {
     const { id } = req.params;
-    const { description, amount, type, date } = req.body;
+    const { description, amount, type, date, category_id } = req.body;
     const userId = req.user.id;
 
     if (!description || !amount || !type || !date) {
-        return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+        return res.status(400).json({ message: 'Campos de descrição, valor, tipo e data são obrigatórios.' });
     }
     if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
         return res.status(400).json({ message: 'Valor deve ser um número positivo.' });
@@ -69,9 +70,14 @@ exports.updateTransaction = async (req, res) => {
     if (!['income', 'expense'].includes(type)) {
         return res.status(400).json({ message: 'Tipo de transação inválido. Deve ser "income" ou "expense".' });
     }
+    // category_id pode ser opcional (null no DB), mas se existir, deve ser um número válido
+    if (category_id !== null && isNaN(parseInt(category_id))) { // Verifica se não é null E não é um número
+        return res.status(400).json({ message: 'ID da categoria inválido.' });
+    }
 
     try {
-        const updated = await TransactionModel.updateTransaction(parseInt(id), userId, description, amount, type, date);
+        // Usa category_id diretamente (já tratado para ser null ou number no frontend)
+        const updated = await TransactionModel.updateTransaction(parseInt(id), userId, description, amount, type, date, category_id);
         if (!updated) {
             return res.status(404).json({ message: 'Transação não encontrada ou você não tem permissão para atualizá-la.' });
         }
@@ -82,7 +88,6 @@ exports.updateTransaction = async (req, res) => {
     }
 };
 
-// Excluir uma transação
 exports.deleteTransaction = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;

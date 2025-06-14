@@ -1,14 +1,22 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    // Declaração de elementos HTML
     const logoutBtn = document.getElementById('logoutBtn');
+    const adminPanelBtn = document.getElementById('adminPanelBtn'); // Declarado dentro do DOMContentLoaded
     const transactionList = document.getElementById('transactionList');
     const addTransactionBtn = document.getElementById('addTransactionBtn');
+    const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
     const transactionFormModal = document.getElementById('transactionFormModal');
-    const closeButton = document.querySelector('.modal .close-button');
+    const categoryManagementModal = document.getElementById('categoryManagementModal');
+    const closeTransactionModalBtn = document.querySelector('#transactionFormModal .close-button');
+    const closeCategoryModalBtn = document.querySelector('#categoryManagementModal .close-button');
     const transactionForm = document.getElementById('transactionForm');
+    const categoryForm = document.getElementById('categoryForm');
+    const categoryListElement = document.getElementById('categoryList');
     const transactionIdInput = document.getElementById('transactionId');
     const descriptionInput = document.getElementById('description');
     const amountInput = document.getElementById('amount');
     const typeInput = document.getElementById('type');
+    const categorySelect = document.getElementById('category');
     const dateInput = document.getElementById('date');
     const totalIncomeElement = document.getElementById('totalIncome');
     const totalExpenseElement = document.getElementById('totalExpense');
@@ -16,9 +24,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filterDescriptionInput = document.getElementById('filterDescription');
     const sortTypeSelect = document.getElementById('sortType');
 
-    let transactions = [];
+    const categoryIdInput = document.getElementById('categoryId');
+    const categoryNameInput = document.getElementById('categoryName');
+    const categoryTypeInput = document.getElementById('categoryType');
 
-    // Função para verificar autenticação
+    let transactions = [];
+    let categories = [];
+
+    // --- Funções de Autenticação e Inicialização ---
     async function checkAuth() {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -30,19 +43,179 @@ document.addEventListener('DOMContentLoaded', async () => {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                if (!response.ok) {
+                if (response.ok) {
+                    const userData = await response.json();
+                    console.log("DEBUG: Dados do Usuário Verificados:", userData.user);
+                    console.log("DEBUG: Papel do Usuário:", userData.user.role);
+
+                    // Apenas tenta manipular o botão se ele foi encontrado
+                    if (adminPanelBtn) {
+                        if (userData.user.role === 'admin') {
+                            adminPanelBtn.style.display = 'inline-block'; // Mostra o botão
+                            console.log("DEBUG: Botão Painel Admin DEVE ser visível.");
+                        } else {
+                            adminPanelBtn.style.display = 'none'; // Esconde para usuários comuns
+                            console.log("DEBUG: Botão Painel Admin DEVE estar oculto (usuário comum).");
+                        }
+                    } else {
+                        console.warn("ADVERTÊNCIA: Elemento adminPanelBtn não encontrado no DOM. Verifique o ID no HTML.");
+                    }
+                } else {
+                    console.error("DEBUG: Verificação de token falhou:", response.status, response.statusText);
                     localStorage.removeItem('token');
                     window.location.href = 'login.html';
                 }
             } catch (error) {
-                console.error('Erro ao verificar token:', error);
+                console.error('DEBUG: Erro ao verificar token:', error);
                 localStorage.removeItem('token');
                 window.location.href = 'login.html';
             }
         }
     }
 
-    // Função para buscar transações
+    // --- Funções de Categorias ---
+    async function fetchCategories() {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/categories', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                categories = await response.json();
+                populateCategorySelect(); // Chama para popular o select
+                renderCategoryList(); // Chama para renderizar a lista no modal de gerenciar
+            } else {
+                console.error('Falha ao buscar categorias:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar categorias:', error);
+        }
+    }
+
+    // CORREÇÃO: Função para popular o select de categorias sem filtrar por tipo
+    function populateCategorySelect() {
+        categorySelect.innerHTML = '<option value="">Selecione uma Categoria</option>';
+        // Removido: const currentType = typeInput.value;
+        // Removido: const filteredCategories = categories.filter(cat => cat.type === currentType);
+
+        // Percorre TODAS as categorias e adiciona uma indicação do tipo
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            // Adiciona o tipo (Receita/Despesa) ao texto da opção
+            option.textContent = `${category.name} (${category.type === 'income' ? 'Receita' : 'Despesa'})`;
+            categorySelect.appendChild(option);
+        });
+    }
+
+    function renderCategoryList() {
+        categoryListElement.innerHTML = '';
+        if (categories.length === 0) {
+            categoryListElement.innerHTML = '<p style="text-align: center;">Nenhuma categoria cadastrada.</p>';
+            return;
+        }
+        categories.forEach(category => {
+            const li = document.createElement('li');
+            li.classList.add('category-item');
+            li.innerHTML = `
+                <span class="category-name-display">${category.name}</span>
+                <span class="category-type-display">(${category.type === 'income' ? 'Receita' : 'Despesa'})</span>
+                <div class="category-actions">
+                    <button class="btn btn-primary btn-sm edit-category-btn" data-id="${category.id}">Editar</button>
+                    <button class="btn btn-danger btn-sm delete-category-btn" data-id="${category.id}">Excluir</button>
+                </div>
+            `;
+            categoryListElement.appendChild(li);
+        });
+        addEventListenersToCategoryButtons();
+    }
+
+    async function addEditCategory() {
+        const token = localStorage.getItem('token');
+        const categoryId = categoryIdInput.value;
+        const name = categoryNameInput.value;
+        const type = categoryTypeInput.value;
+
+        let url = '/api/categories';
+        let method = 'POST';
+
+        if (categoryId) {
+            url = `/api/categories/${categoryId}`;
+            method = 'PUT';
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, type })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                categoryForm.reset();
+                categoryIdInput.value = '';
+                fetchCategories(); // Recarrega categorias após adicionar/editar
+            } else {
+                alert(`Erro: ${data.message || response.statusText}`);
+            }
+        } catch (error) {
+            console.error('Erro na requisição de categoria:', error);
+            alert('Erro ao comunicar com o servidor.');
+        }
+    }
+
+    async function deleteCategory(id) {
+        const token = localStorage.getItem('token');
+        if (confirm('Tem certeza que deseja excluir esta categoria? Transações associadas terão a categoria removida.')) {
+            try {
+                const response = await fetch(`/api/categories/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert(data.message);
+                    fetchCategories(); // Recarrega categorias
+                    fetchTransactions(); // Recarrega transações pois podem ter perdido a categoria
+                } else {
+                    alert(`Erro: ${data.message || response.statusText}`);
+                }
+            } catch (error) {
+                console.error('Erro ao excluir categoria:', error);
+                alert('Erro ao comunicar com o servidor.');
+            }
+        }
+    }
+
+    function editCategory(id) {
+        const category = categories.find(cat => cat.id === id);
+        if (category) {
+            categoryIdInput.value = category.id;
+            categoryNameInput.value = category.name;
+            categoryTypeInput.value = category.type;
+        }
+    }
+
+    function addEventListenersToCategoryButtons() {
+        document.querySelectorAll('.edit-category-btn').forEach(button => {
+            button.onclick = () => editCategory(parseInt(button.dataset.id));
+        });
+        document.querySelectorAll('.delete-category-btn').forEach(button => {
+            button.onclick = () => deleteCategory(parseInt(button.dataset.id));
+        });
+    }
+
+    // --- Funções de Transações (com integração de Categorias) ---
     async function fetchTransactions() {
         const token = localStorage.getItem('token');
         try {
@@ -53,19 +226,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if (response.ok) {
                 transactions = await response.json();
-                console.log("Transações recebidas:", transactions); // Debug: ver transações
                 renderTransactions();
                 updateOverview();
             } else {
                 console.error('Falha ao buscar transações:', response.statusText);
-                // Tratar erro, talvez redirecionar para login se for erro de autenticação
             }
         } catch (error) {
             console.error('Erro ao buscar transações:', error);
         }
     }
 
-    // Função para renderizar transações
     function renderTransactions() {
         transactionList.innerHTML = '';
         let filteredTransactions = transactions.filter(transaction =>
@@ -74,7 +244,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const sortValue = sortTypeSelect.value;
         filteredTransactions.sort((a, b) => {
-            // Garante que a comparação de data funcione, mesmo se for string
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
 
@@ -83,9 +252,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (sortValue === 'date-asc') {
                 return dateA - dateB;
             } else if (sortValue === 'amount-desc') {
-                return parseFloat(b.amount) - parseFloat(a.amount); // CORREÇÃO AQUI
+                return parseFloat(b.amount) - parseFloat(a.amount);
             } else if (sortValue === 'amount-asc') {
-                return parseFloat(a.amount) - parseFloat(b.amount); // CORREÇÃO AQUI
+                return parseFloat(a.amount) - parseFloat(b.amount);
             }
             return 0;
         });
@@ -100,6 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             li.classList.add('transaction-item', transaction.type);
             li.innerHTML = `
                 <span class="description">${transaction.description}</span>
+                <span class="category-name">${transaction.category_name ? `(${transaction.category_name})` : '(Sem Categoria)'}</span>
                 <span class="amount">${transaction.type === 'income' ? '+' : '-'} R$ ${parseFloat(transaction.amount).toFixed(2).replace('.', ',')}</span>
                 <span class="date">${new Date(transaction.date).toLocaleDateString('pt-BR')}</span>
                 <div class="transaction-actions">
@@ -113,40 +283,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         addEventListenersToTransactionButtons();
     }
 
-    // Função para atualizar o resumo
     function updateOverview() {
         const totalIncome = transactions
             .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + parseFloat(t.amount), 0); // CORREÇÃO AQUI
+            .reduce((sum, t) => sum + parseFloat(t.amount), 0);
         const totalExpense = transactions
             .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + parseFloat(t.amount), 0); // CORREÇÃO AQUI
+            .reduce((sum, t) => sum + parseFloat(t.amount), 0);
         const currentBalance = totalIncome - totalExpense;
-
-        console.log("DEBUG: Total Receitas:", totalIncome);
-        console.log("DEBUG: Total Despesas:", totalExpense);
-        console.log("DEBUG: Saldo Atual:", currentBalance);
 
         totalIncomeElement.textContent = `R$ ${totalIncome.toFixed(2).replace('.', ',')}`;
         totalExpenseElement.textContent = `R$ ${totalExpense.toFixed(2).replace('.', ',')}`;
         currentBalanceElement.textContent = `R$ ${currentBalance.toFixed(2).replace('.', ',')}`;
     }
 
-    // Adicionar/Editar Transação
+    // Event Listener para o formulário de Transação
     transactionForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
         const transactionId = transactionIdInput.value;
         const description = descriptionInput.value;
-        const amount = parseFloat(amountInput.value); // Já é float aqui do input type="number"
+        const amount = parseFloat(amountInput.value);
         const type = typeInput.value;
+        const category_id = categorySelect.value ? parseInt(categorySelect.value) : null;
         const date = dateInput.value;
 
-        const transactionData = { description, amount, type, date };
+        const transactionData = { description, amount, type, date, category_id };
+        console.log("DEBUG: Dados da Transação a serem enviados:", transactionData);
+
         let url = '/api/finance/transactions';
         let method = 'POST';
 
-        if (transactionId) { // Edição
+        if (transactionId) {
             url = `/api/finance/transactions/${transactionId}`;
             method = 'PUT';
         }
@@ -176,42 +344,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Excluir Transação
-    async function deleteTransaction(id) {
-        const token = localStorage.getItem('token');
-        if (confirm('Tem certeza que deseja excluir esta transação?')) {
-            try {
-                const response = await fetch(`/api/finance/transactions/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+    // Event Listener para o formulário de Categoria
+    categoryForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await addEditCategory();
+    });
 
-                if (response.ok) {
-                    alert('Transação excluída com sucesso!');
-                    fetchTransactions();
-                } else {
-                    const errorData = await response.json();
-                    alert(`Erro ao excluir transação: ${errorData.message || response.statusText}`);
-                }
-            } catch (error) {
-                console.error('Erro na requisição:', error);
-                alert('Erro ao comunicar com o servidor.');
-            }
-        }
-    }
-
-    // Preencher formulário para edição
+    // Preencher formulário de transação para edição
     async function editTransaction(id) {
         const transaction = transactions.find(t => t.id === id);
         if (transaction) {
             transactionIdInput.value = transaction.id;
             descriptionInput.value = transaction.description;
-            amountInput.value = parseFloat(transaction.amount); // CORREÇÃO AQUI para preencher o input corretamente
+            amountInput.value = parseFloat(transaction.amount);
             typeInput.value = transaction.type;
-            dateInput.value = new Date(transaction.date).toISOString().split('T')[0]; // Formata para 'YYYY-MM-DD'
-            transactionFormModal.style.display = 'flex'; // Exibe o modal
+            dateInput.value = new Date(transaction.date).toISOString().split('T')[0];
+
+            // Não chamamos populateCategorySelect() aqui se quisermos que ele não seja filtrado pelo tipo atual da transação.
+            // A populateCategorySelect() já lista todas as categorias agora.
+            // Apenas selecionamos a categoria da transação.
+            if (transaction.category_id) {
+                categorySelect.value = transaction.category_id;
+            } else {
+                categorySelect.value = '';
+            }
+
+            transactionFormModal.style.display = 'flex';
         }
     }
 
@@ -224,18 +382,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Event Listeners para o Modal
-    addTransactionBtn.onclick = () => {
-        transactionIdInput.value = ''; // Limpa o ID para nova transação
-        transactionForm.reset(); // Limpa o formulário
+    // --- Event Listeners dos Modais e Botões ---
+    addTransactionBtn.onclick = async () => {
+        transactionIdInput.value = '';
+        transactionForm.reset();
+        // Chamamos populateCategorySelect() para garantir que o select esteja preenchido
+        // com todas as categorias antes de abrir o modal de adicionar nova transação.
+        await populateCategorySelect();
+        categorySelect.value = ''; // Garante que começa sem seleção
         transactionFormModal.style.display = 'flex';
     };
-    closeButton.onclick = () => {
+    closeTransactionModalBtn.onclick = () => {
         transactionFormModal.style.display = 'none';
     };
+
+    manageCategoriesBtn.onclick = async () => {
+        categoryForm.reset();
+        categoryIdInput.value = '';
+        await fetchCategories();
+        categoryManagementModal.style.display = 'flex';
+    };
+    closeCategoryModalBtn.onclick = () => {
+        categoryManagementModal.style.display = 'none';
+    };
+
+    // Event listener para o botão do Painel Admin
+    if (adminPanelBtn) {
+        adminPanelBtn.addEventListener('click', () => {
+            window.location.href = 'admin.html';
+        });
+    }
+
+    // Fechar modais clicando fora
     window.onclick = (event) => {
         if (event.target == transactionFormModal) {
             transactionFormModal.style.display = 'none';
+        }
+        if (event.target == categoryManagementModal) {
+            categoryManagementModal.style.display = 'none';
         }
     };
 
@@ -246,7 +430,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'login.html';
     });
 
-    // Inicialização
+    // Removido: typeInput.addEventListener('change', populateCategorySelect);
+    // Este listener não é mais necessário se o select de categoria não é filtrado por tipo.
+    // Se desejar adicionar funcionalidade de agrupar por tipo (ex: <optgroup>),
+    // essa lógica precisaria ser reconstruída aqui.
+
+    // --- Inicialização ---
     await checkAuth();
+    await fetchCategories(); // Carrega categorias ao iniciar
     fetchTransactions();
 });

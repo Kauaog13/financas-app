@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-router.get('/verify', authenticateToken, authController.verifyToken); // Rota para verificar a validade do token
+router.get('/verify', authenticateToken, authController.verifyToken);
 
 module.exports = router;

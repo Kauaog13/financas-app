@@ -11,6 +11,7 @@
         <div class="container">
             <h1>Controle de Finanças</h1>
             <nav>
+                <button id="adminPanelBtn" class="btn btn-primary" style="display: none;">Painel Admin</button>
                 <button id="logoutBtn" class="btn btn-secondary">Sair</button>
             </nav>
         </div>
@@ -38,6 +39,7 @@
         <section class="transactions-section">
             <h2>Minhas Transações</h2>
             <button id="addTransactionBtn" class="btn btn-primary">Adicionar Nova Transação</button>
+            <button id="manageCategoriesBtn" class="btn btn-info">Gerenciar Categorias</button>
 
             <div id="transactionFormModal" class="modal">
                 <div class="modal-content">
@@ -61,11 +63,42 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label for="category">Categoria:</label>
+                            <select id="category" required>
+                                </select>
+                        </div>
+                        <div class="form-group">
                             <label for="date">Data:</label>
                             <input type="date" id="date" required>
                         </div>
                         <button type="submit" class="btn btn-success">Salvar Transação</button>
                     </form>
+                </div>
+            </div>
+
+            <div id="categoryManagementModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-button category-close-button">&times;</span>
+                    <h3>Gerenciar Categorias</h3>
+                    <form id="categoryForm">
+                        <input type="hidden" id="categoryId">
+                        <div class="form-group">
+                            <label for="categoryName">Nome da Categoria:</label>
+                            <input type="text" id="categoryName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="categoryType">Tipo:</label>
+                            <select id="categoryType" required>
+                                <option value="income">Receita</option>
+                                <option value="expense">Despesa</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">Salvar Categoria</button>
+                    </form>
+                    <hr>
+                    <h4>Minhas Categorias</h4>
+                    <ul id="categoryList" class="category-list">
+                        </ul>
                 </div>
             </div>
 
