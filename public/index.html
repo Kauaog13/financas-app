@@ -126,8 +126,16 @@
             </div>
 
             <div class="filter-sort">
-                <input type="text" id="filterDescription" placeholder="Filtrar por descrição...">
-                <select id="sortType">
+                <input type="text" id="filterDescription" placeholder="Filtrar descrição...">
+                <select id="filterType"> <option value="">Todos os Tipos</option>
+                    <option value="income">Receita</option>
+                    <option value="expense">Despesa</option>
+                </select>
+                <select id="filterCategory"> <option value="">Todas as Categorias</option>
+                    </select>
+                <label for="filterStartDate">De:</label>
+                <input type="date" id="filterStartDate"> <label for="filterEndDate">Até:</label>
+                <input type="date" id="filterEndDate"> <button id="applyFiltersBtn" class="btn btn-primary btn-sm">Aplicar Filtros</button> <button id="resetFiltersBtn" class="btn btn-secondary btn-sm">Limpar Filtros</button> <select id="sortType">
                     <option value="date-desc">Data (Mais Recente)</option>
                     <option value="date-asc">Data (Mais Antiga)</option>
                     <option value="amount-desc">Valor (Maior)</option>

@@ -26,14 +26,22 @@ exports.createTransaction = async (req, res) => {
     }
 };
 
+// MODIFICADO: getTransactions para ler parâmetros de filtro
 exports.getTransactions = async (req, res) => {
     const userId = req.user.id;
+    const filters = {
+        description: req.query.description,
+        type: req.query.type,
+        categoryId: req.query.categoryId ? parseInt(req.query.categoryId) : undefined, // Converte para int
+        startDate: req.query.startDate,
+        endDate: req.query.endDate
+    };
 
     try {
-        const transactions = await TransactionModel.getTransactionsByUserId(userId);
+        const transactions = await TransactionModel.getTransactionsByUserId(userId, filters);
         res.status(200).json(transactions);
     } catch (error) {
-        console.error('Erro ao buscar transações:', error);
+        console.error('Erro ao buscar transações com filtros:', error);
         res.status(500).json({ message: 'Erro interno do servidor ao buscar transações.' });
     }
 };
@@ -84,13 +92,11 @@ exports.updateTransaction = async (req, res) => {
     }
 };
 
-// Função de Excluir Transação - Confirmada para estar correta
 exports.deleteTransaction = async (req, res) => {
-    const { id } = req.params; // ID da transação da URL
-    const userId = req.user.id; // ID do usuário do token JWT
+    const { id } = req.params;
+    const userId = req.user.id;
 
     try {
-        // O modelo exige o transactionId e o userId para garantir que o usuário só exclua suas próprias transações
         const deleted = await TransactionModel.deleteTransaction(parseInt(id), userId);
         if (!deleted) {
             return res.status(404).json({ message: 'Transação não encontrada ou você não tem permissão para excluí-la.' });

@@ -9,15 +9,41 @@ class TransactionModel {
         return result.insertId;
     }
 
-    static async getTransactionsByUserId(userId) {
-        const [rows] = await pool.execute(
-            `SELECT t.*, c.name AS category_name
-             FROM transactions t
-             LEFT JOIN categories c ON t.category_id = c.id
-             WHERE t.user_id = ?
-             ORDER BY t.date DESC, t.created_at DESC`,
-            [userId]
-        );
+    // MODIFICADO: getTransactionsByUserId para aceitar filtros
+    static async getTransactionsByUserId(userId, filters = {}) {
+        let query = `
+            SELECT t.*, c.name AS category_name
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            WHERE t.user_id = ?
+        `;
+        const params = [userId];
+
+        // Adiciona filtros dinamicamente
+        if (filters.description) {
+            query += ` AND t.description LIKE ?`;
+            params.push(`%${filters.description}%`);
+        }
+        if (filters.type) {
+            query += ` AND t.type = ?`;
+            params.push(filters.type);
+        }
+        if (filters.categoryId) {
+            query += ` AND t.category_id = ?`;
+            params.push(filters.categoryId);
+        }
+        if (filters.startDate) {
+            query += ` AND t.date >= ?`;
+            params.push(filters.startDate);
+        }
+        if (filters.endDate) {
+            query += ` AND t.date <= ?`;
+            params.push(filters.endDate);
+        }
+
+        query += ` ORDER BY t.date DESC, t.created_at DESC`;
+
+        const [rows] = await pool.execute(query, params);
         return rows;
     }
 
@@ -48,7 +74,6 @@ class TransactionModel {
         return result.affectedRows > 0;
     }
 
-    // Método para obter despesas agrupadas por categoria (já existente)
     static async getExpensesByCategory(userId) {
         const [rows] = await pool.execute(
             `SELECT c.name AS category, SUM(t.amount) AS total_amount
@@ -62,7 +87,6 @@ class TransactionModel {
         return rows;
     }
 
-    // NOVO MÉTODO: Para obter receitas agrupadas por categoria
     static async getIncomesByCategory(userId) {
         const [rows] = await pool.execute(
             `SELECT c.name AS category, SUM(t.amount) AS total_amount

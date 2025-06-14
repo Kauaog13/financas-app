@@ -24,11 +24,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentBalanceElement = document.getElementById('currentBalance');
     const filterDescriptionInput = document.getElementById('filterDescription');
     const sortTypeSelect = document.getElementById('sortType');
+
+    // NOVO: Elementos de filtro
+    const filterTypeSelect = document.getElementById('filterType');
+    const filterCategorySelect = document.getElementById('filterCategory');
+    const filterStartDateInput = document.getElementById('filterStartDate');
+    const filterEndDateInput = document.getElementById('filterEndDate');
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+
     // Elementos para os gráficos
     const expensePieChartCanvas = document.getElementById('expensePieChart');
     const noExpenseDataMessage = document.getElementById('noExpenseDataMessage');
-    const incomeBarChartCanvas = document.getElementById('incomeBarChart'); // NOVO: Canvas para o gráfico de barras de receita
-    const noIncomeDataMessage = document.getElementById('noIncomeDataMessage'); // NOVO: Mensagem para sem dados de receita
+    const incomeBarChartCanvas = document.getElementById('incomeBarChart');
+    const noIncomeDataMessage = document.getElementById('noIncomeDataMessage');
 
 
     const categoryIdInput = document.getElementById('categoryId');
@@ -38,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let transactions = [];
     let categories = [];
     let expensePieChartInstance = null;
-    let incomeBarChartInstance = null; // NOVO: Para armazenar a instância do gráfico de barras
+    let incomeBarChartInstance = null;
 
     // --- Funções de Autenticação e Inicialização ---
     async function checkAuth() {
@@ -92,7 +101,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if (response.ok) {
                 categories = await response.json();
-                populateCategorySelect();
+                populateCategorySelect(); // Para o formulário de transação
+                populateFilterCategorySelect(); // NOVO: Para o filtro de categoria
                 renderCategoryList();
             } else {
                 console.error('Falha ao buscar categorias:', response.statusText);
@@ -109,6 +119,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             option.value = category.id;
             option.textContent = `${category.name} (${category.type === 'income' ? 'Receita' : 'Despesa'})`;
             categorySelect.appendChild(option);
+        });
+    }
+
+    // NOVO: Função para popular o select de filtro de categoria
+    function populateFilterCategorySelect() {
+        filterCategorySelect.innerHTML = '<option value="">Todas as Categorias</option>';
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = `${category.name} (${category.type === 'income' ? 'Receita' : 'Despesa'})`;
+            filterCategorySelect.appendChild(option);
         });
     }
 
@@ -164,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 categoryForm.reset();
                 categoryIdInput.value = '';
                 fetchCategories();
-                fetchTransactions(); // Recarrega transações para atualizar o gráfico/lista se categorias mudarem
+                fetchTransactions();
             } else {
                 alert(`Erro: ${data.message || response.statusText}`);
             }
@@ -218,11 +239,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --- Funções de Transações (com integração de Categorias) ---
+    // --- Funções de Transações (com integração de Filtros e Categorias) ---
     async function fetchTransactions() {
         const token = localStorage.getItem('token');
+
+        // NOVO: Coleta os valores dos filtros
+        const filters = {
+            description: filterDescriptionInput.value,
+            type: filterTypeSelect.value,
+            categoryId: filterCategorySelect.value,
+            startDate: filterStartDateInput.value,
+            endDate: filterEndDateInput.value
+        };
+
+        // Constrói a URL com os parâmetros de query
+        const queryParams = new URLSearchParams();
+        for (const key in filters) {
+            if (filters[key]) { // Adiciona apenas se o valor não for vazio
+                queryParams.append(key, filters[key]);
+            }
+        }
+        const url = `/api/finance/transactions?${queryParams.toString()}`;
+        console.log("DEBUG: URL de requisição de transações:", url);
+
+
         try {
-            const response = await fetch('/api/finance/transactions', {
+            const response = await fetch(url, { // Usa a URL com filtros
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -231,9 +273,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 transactions = await response.json();
                 renderTransactions();
                 updateOverview();
-                // Chama as funções para renderizar os gráficos após buscar transações
                 renderExpensePieChart();
-                renderIncomeBarChart(); // NOVO: Chama a função para renderizar o gráfico de barras de receita
+                renderIncomeBarChart();
             } else {
                 console.error('Falha ao buscar transações:', response.statusText);
             }
@@ -244,12 +285,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderTransactions() {
         transactionList.innerHTML = '';
-        let filteredTransactions = transactions.filter(transaction =>
-            transaction.description.toLowerCase().includes(filterDescriptionInput.value.toLowerCase())
-        );
+        // A filtragem por descrição agora é feita no backend, mas mantemos o sort aqui
+        // Let filteredTransactions = transactions.filter(transaction =>
+        //     transaction.description.toLowerCase().includes(filterDescriptionInput.value.toLowerCase())
+        // );
+
+        let transactionsToRender = [...transactions]; // Usa as transações já filtradas pelo backend
 
         const sortValue = sortTypeSelect.value;
-        filteredTransactions.sort((a, b) => {
+        transactionsToRender.sort((a, b) => {
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
 
@@ -265,12 +309,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             return 0;
         });
 
-        if (filteredTransactions.length === 0) {
-            transactionList.innerHTML = '<p style="text-align: center;">Nenhuma transação encontrada.</p>';
+        if (transactionsToRender.length === 0) {
+            transactionList.innerHTML = '<p style="text-align: center;">Nenhuma transação encontrada com os filtros aplicados.</p>';
             return;
         }
 
-        filteredTransactions.forEach(transaction => {
+        transactionsToRender.forEach(transaction => {
             const li = document.createElement('li');
             li.classList.add('transaction-item', transaction.type);
             li.innerHTML = `
@@ -303,7 +347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentBalanceElement.textContent = `R$ ${currentBalance.toFixed(2).replace('.', ',')}`;
     }
 
-    // --- Função para Renderizar o Gráfico de Despesas por Categoria (já existente) ---
+    // --- Função para Renderizar o Gráfico de Despesas por Categoria ---
     async function renderExpensePieChart() {
         const token = localStorage.getItem('token');
         try {
@@ -394,11 +438,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- NOVO: Função para Renderizar o Gráfico de Barras de Receitas ---
+    // --- Função para Renderizar o Gráfico de Barras de Receitas ---
     async function renderIncomeBarChart() {
         const token = localStorage.getItem('token');
         try {
-            const response = await fetch('/api/reports/incomes-by-category', { // NOVO ENDPOINT
+            const response = await fetch('/api/reports/incomes-by-category', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -430,8 +474,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const labels = reportData.map(item => item.category);
             const data = reportData.map(item => parseFloat(item.total_amount));
 
-            // Gera uma cor fixa ou gradiente para as barras de receita
-            const backgroundColor = 'rgba(75, 192, 192, 0.7)'; // Um tom de verde-água/azul
+            const backgroundColor = 'rgba(75, 192, 192, 0.7)';
             const borderColor = 'rgba(75, 192, 192, 1)';
 
             const chartData = {
@@ -450,7 +493,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false, // Não precisa de legenda se há apenas um dataset
+                        display: false,
                     },
                     tooltip: {
                         callbacks: {
@@ -480,7 +523,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             incomeBarChartInstance = new Chart(incomeBarChartCanvas, {
-                type: 'bar', // Tipo de gráfico de barras
+                type: 'bar',
                 data: chartData,
                 options: chartOptions,
             });
@@ -695,8 +738,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    filterDescriptionInput.addEventListener('input', renderTransactions);
-    sortTypeSelect.addEventListener('change', renderTransactions);
+    // NOVO: Event listeners para os filtros
+    applyFiltersBtn.addEventListener('click', fetchTransactions);
+    resetFiltersBtn.addEventListener('click', () => {
+        filterDescriptionInput.value = '';
+        filterTypeSelect.value = '';
+        filterCategorySelect.value = '';
+        filterStartDateInput.value = '';
+        filterEndDateInput.value = '';
+        fetchTransactions(); // Re-fetch para remover filtros
+    });
+
+    filterDescriptionInput.addEventListener('input', () => { /* Não dispara fetch aqui, espera botão */ });
+    filterTypeSelect.addEventListener('change', () => { /* Não dispara fetch aqui, espera botão */ });
+    filterCategorySelect.addEventListener('change', () => { /* Não dispara fetch aqui, espera botão */ });
+    filterStartDateInput.addEventListener('change', () => { /* Não dispara fetch aqui, espera botão */ });
+    filterEndDateInput.addEventListener('change', () => { /* Não dispara fetch aqui, espera botão */ });
+
+
+    sortTypeSelect.addEventListener('change', renderTransactions); // A ordenação ainda é feita no frontend
+
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('token');
         window.location.href = 'login.html';
@@ -706,6 +767,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Inicialização ---
     await checkAuth();
-    await fetchCategories();
-    fetchTransactions();
+    await fetchCategories(); // Carrega categorias e popula os selects de categoria
+    fetchTransactions(); // Busca transações (com ou sem filtros iniciais) e renderiza gráficos
 });
