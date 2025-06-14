@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filterDescriptionInput = document.getElementById('filterDescription');
     const sortTypeSelect = document.getElementById('sortType');
 
-    // NOVO: Elementos de filtro
+    // Elementos de filtro
     const filterTypeSelect = document.getElementById('filterType');
     const filterCategorySelect = document.getElementById('filterCategory');
     const filterStartDateInput = document.getElementById('filterStartDate');
@@ -101,8 +101,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if (response.ok) {
                 categories = await response.json();
-                populateCategorySelect(); // Para o formulário de transação
-                populateFilterCategorySelect(); // NOVO: Para o filtro de categoria
+                populateCategorySelect();
+                populateFilterCategorySelect();
                 renderCategoryList();
             } else {
                 console.error('Falha ao buscar categorias:', response.statusText);
@@ -122,7 +122,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // NOVO: Função para popular o select de filtro de categoria
     function populateFilterCategorySelect() {
         filterCategorySelect.innerHTML = '<option value="">Todas as Categorias</option>';
         categories.forEach(category => {
@@ -243,7 +242,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function fetchTransactions() {
         const token = localStorage.getItem('token');
 
-        // NOVO: Coleta os valores dos filtros
+        // Coleta os valores dos filtros
         const filters = {
             description: filterDescriptionInput.value,
             type: filterTypeSelect.value,
@@ -255,7 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Constrói a URL com os parâmetros de query
         const queryParams = new URLSearchParams();
         for (const key in filters) {
-            if (filters[key]) { // Adiciona apenas se o valor não for vazio
+            if (filters[key]) {
                 queryParams.append(key, filters[key]);
             }
         }
@@ -264,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
         try {
-            const response = await fetch(url, { // Usa a URL com filtros
+            const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -285,12 +284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderTransactions() {
         transactionList.innerHTML = '';
-        // A filtragem por descrição agora é feita no backend, mas mantemos o sort aqui
-        // Let filteredTransactions = transactions.filter(transaction =>
-        //     transaction.description.toLowerCase().includes(filterDescriptionInput.value.toLowerCase())
-        // );
-
-        let transactionsToRender = [...transactions]; // Usa as transações já filtradas pelo backend
+        let transactionsToRender = [...transactions];
 
         const sortValue = sortTypeSelect.value;
         transactionsToRender.sort((a, b) => {
@@ -347,7 +341,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentBalanceElement.textContent = `R$ ${currentBalance.toFixed(2).replace('.', ',')}`;
     }
 
-    // --- Função para Renderizar o Gráfico de Despesas por Categoria ---
+    // --- Função para Renderizar o Gráfico de Despesas por Categoria (com porcentagem no tooltip) ---
     async function renderExpensePieChart() {
         const token = localStorage.getItem('token');
         try {
@@ -382,6 +376,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const labels = reportData.map(item => item.category);
             const data = reportData.map(item => parseFloat(item.total_amount));
+            const totalExpenses = data.reduce((sum, current) => sum + current, 0); // Soma total para porcentagem
 
             const backgroundColors = data.map(() => {
                 const r = Math.floor(Math.random() * 255);
@@ -417,6 +412,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 }
                                 if (context.parsed !== null) {
                                     label += 'R$ ' + context.parsed.toFixed(2).replace('.', ',');
+                                    if (totalExpenses > 0) {
+                                        const percentage = ((context.parsed / totalExpenses) * 100).toFixed(2);
+                                        label += ` (${percentage}%)`;
+                                    }
                                 }
                                 return label;
                             }
@@ -438,7 +437,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- Função para Renderizar o Gráfico de Barras de Receitas ---
+    // --- Função para Renderizar o Gráfico de Barras de Receitas (com porcentagem no tooltip) ---
     async function renderIncomeBarChart() {
         const token = localStorage.getItem('token');
         try {
@@ -473,6 +472,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const labels = reportData.map(item => item.category);
             const data = reportData.map(item => parseFloat(item.total_amount));
+            const totalIncomes = data.reduce((sum, current) => sum + current, 0); // NOVO: Soma total para porcentagem
 
             const backgroundColor = 'rgba(75, 192, 192, 0.7)';
             const borderColor = 'rgba(75, 192, 192, 1)';
@@ -503,7 +503,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     label += ': ';
                                 }
                                 if (context.parsed.y !== null) {
+                                    // Adiciona o valor monetário
                                     label += 'R$ ' + context.parsed.y.toFixed(2).replace('.', ',');
+                                    // NOVO: Calcula e adiciona a porcentagem
+                                    if (totalIncomes > 0) {
+                                        const percentage = ((context.parsed.y / totalIncomes) * 100).toFixed(2);
+                                        label += ` (${percentage}%)`;
+                                    }
                                 }
                                 return label;
                             }
@@ -572,7 +578,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert('Transação salva com sucesso!');
                 transactionFormModal.style.display = 'none';
                 transactionForm.reset();
-                fetchTransactions(); // Re-fetch para atualizar a lista e os gráficos
+                fetchTransactions();
             } else {
                 const errorData = await response.json();
                 alert(`Erro ao salvar transação: ${errorData.message || response.statusText}`);
@@ -625,7 +631,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (response.ok) {
                     alert('Transação excluída com sucesso!');
-                    fetchTransactions(); // Re-fetch para atualizar a lista e os gráficos
+                    fetchTransactions();
                 } else {
                     const errorData = await response.json();
                     alert(`Erro ao excluir transação: ${errorData.message || response.statusText}`);
@@ -724,7 +730,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } catch (error) {
             console.error('DEBUG: Erro na requisição de exportação (código JS):', error);
-            alert('Erro ao comunicar com o servidor para exportar transações.');
+            alert('Erro ao comunicar com o servidor.');
         }
     });
 
@@ -738,7 +744,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // NOVO: Event listeners para os filtros
+    // Event listeners para os filtros
     applyFiltersBtn.addEventListener('click', fetchTransactions);
     resetFiltersBtn.addEventListener('click', () => {
         filterDescriptionInput.value = '';
@@ -756,7 +762,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     filterEndDateInput.addEventListener('change', () => { /* Não dispara fetch aqui, espera botão */ });
 
 
-    sortTypeSelect.addEventListener('change', renderTransactions); // A ordenação ainda é feita no frontend
+    sortTypeSelect.addEventListener('change', renderTransactions);
 
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('token');
@@ -767,6 +773,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Inicialização ---
     await checkAuth();
-    await fetchCategories(); // Carrega categorias e popula os selects de categoria
-    fetchTransactions(); // Busca transações (com ou sem filtros iniciais) e renderiza gráficos
+    await fetchCategories();
+    fetchTransactions();
 });
