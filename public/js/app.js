@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // Declaração de elementos HTML
+    // Declaração de elementos HTML - DEVE SER DENTRO DO DOMContentLoaded
     const logoutBtn = document.getElementById('logoutBtn');
-    const adminPanelBtn = document.getElementById('adminPanelBtn'); // Declarado dentro do DOMContentLoaded
+    const adminPanelBtn = document.getElementById('adminPanelBtn');
     const transactionList = document.getElementById('transactionList');
     const addTransactionBtn = document.getElementById('addTransactionBtn');
     const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
@@ -48,13 +48,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.log("DEBUG: Dados do Usuário Verificados:", userData.user);
                     console.log("DEBUG: Papel do Usuário:", userData.user.role);
 
-                    // Apenas tenta manipular o botão se ele foi encontrado
                     if (adminPanelBtn) {
                         if (userData.user.role === 'admin') {
-                            adminPanelBtn.style.display = 'inline-block'; // Mostra o botão
+                            adminPanelBtn.style.display = 'inline-block';
                             console.log("DEBUG: Botão Painel Admin DEVE ser visível.");
                         } else {
-                            adminPanelBtn.style.display = 'none'; // Esconde para usuários comuns
+                            adminPanelBtn.style.display = 'none';
                             console.log("DEBUG: Botão Painel Admin DEVE estar oculto (usuário comum).");
                         }
                     } else {
@@ -84,8 +83,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if (response.ok) {
                 categories = await response.json();
-                populateCategorySelect(); // Chama para popular o select
-                renderCategoryList(); // Chama para renderizar a lista no modal de gerenciar
+                populateCategorySelect();
+                renderCategoryList();
             } else {
                 console.error('Falha ao buscar categorias:', response.statusText);
             }
@@ -94,17 +93,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // CORREÇÃO: Função para popular o select de categorias sem filtrar por tipo
     function populateCategorySelect() {
         categorySelect.innerHTML = '<option value="">Selecione uma Categoria</option>';
-        // Removido: const currentType = typeInput.value;
-        // Removido: const filteredCategories = categories.filter(cat => cat.type === currentType);
-
-        // Percorre TODAS as categorias e adiciona uma indicação do tipo
         categories.forEach(category => {
             const option = document.createElement('option');
             option.value = category.id;
-            // Adiciona o tipo (Receita/Despesa) ao texto da opção
             option.textContent = `${category.name} (${category.type === 'income' ? 'Receita' : 'Despesa'})`;
             categorySelect.appendChild(option);
         });
@@ -161,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert(data.message);
                 categoryForm.reset();
                 categoryIdInput.value = '';
-                fetchCategories(); // Recarrega categorias após adicionar/editar
+                fetchCategories();
             } else {
                 alert(`Erro: ${data.message || response.statusText}`);
             }
@@ -185,8 +178,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const data = await response.json();
                 if (response.ok) {
                     alert(data.message);
-                    fetchCategories(); // Recarrega categorias
-                    fetchTransactions(); // Recarrega transações pois podem ter perdido a categoria
+                    fetchCategories();
+                    fetchTransactions();
                 } else {
                     alert(`Erro: ${data.message || response.statusText}`);
                 }
@@ -280,6 +273,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             transactionList.appendChild(li);
         });
 
+        // Corrigido: Garante que os listeners são adicionados APÓS a renderização
         addEventListenersToTransactionButtons();
     }
 
@@ -360,9 +354,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             typeInput.value = transaction.type;
             dateInput.value = new Date(transaction.date).toISOString().split('T')[0];
 
-            // Não chamamos populateCategorySelect() aqui se quisermos que ele não seja filtrado pelo tipo atual da transação.
-            // A populateCategorySelect() já lista todas as categorias agora.
-            // Apenas selecionamos a categoria da transação.
+            await populateCategorySelect();
             if (transaction.category_id) {
                 categorySelect.value = transaction.category_id;
             } else {
@@ -373,6 +365,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Função de Excluir Transação - Corrigida e com logs de depuração
+    async function deleteTransaction(id) {
+        const token = localStorage.getItem('token');
+        console.log("DEBUG: Tentando deletar transação com ID:", id); // Log para ver o ID
+        if (confirm('Tem certeza que deseja excluir esta transação?')) {
+            try {
+                const response = await fetch(`/api/finance/transactions/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Transação excluída com sucesso!');
+                    fetchTransactions(); // Recarrega a lista após exclusão
+                } else {
+                    const errorData = await response.json();
+                    alert(`Erro ao excluir transação: ${errorData.message || response.statusText}`);
+                }
+            } catch (error) {
+                console.error('Erro na requisição DELETE:', error); // Log mais específico
+                alert('Erro ao comunicar com o servidor ao excluir transação.');
+            }
+        }
+    }
+
+    // Adiciona Event Listeners para os botões de Editar e Excluir
     function addEventListenersToTransactionButtons() {
         document.querySelectorAll('.edit-btn').forEach(button => {
             button.onclick = () => editTransaction(parseInt(button.dataset.id));
@@ -386,10 +406,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     addTransactionBtn.onclick = async () => {
         transactionIdInput.value = '';
         transactionForm.reset();
-        // Chamamos populateCategorySelect() para garantir que o select esteja preenchido
-        // com todas as categorias antes de abrir o modal de adicionar nova transação.
         await populateCategorySelect();
-        categorySelect.value = ''; // Garante que começa sem seleção
+        categorySelect.value = '';
         transactionFormModal.style.display = 'flex';
     };
     closeTransactionModalBtn.onclick = () => {
@@ -406,14 +424,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         categoryManagementModal.style.display = 'none';
     };
 
-    // Event listener para o botão do Painel Admin
     if (adminPanelBtn) {
         adminPanelBtn.addEventListener('click', () => {
             window.location.href = 'admin.html';
         });
     }
 
-    // Fechar modais clicando fora
     window.onclick = (event) => {
         if (event.target == transactionFormModal) {
             transactionFormModal.style.display = 'none';
@@ -430,13 +446,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'login.html';
     });
 
-    // Removido: typeInput.addEventListener('change', populateCategorySelect);
-    // Este listener não é mais necessário se o select de categoria não é filtrado por tipo.
-    // Se desejar adicionar funcionalidade de agrupar por tipo (ex: <optgroup>),
-    // essa lógica precisaria ser reconstruída aqui.
+    typeInput.addEventListener('change', populateCategorySelect);
 
     // --- Inicialização ---
     await checkAuth();
-    await fetchCategories(); // Carrega categorias ao iniciar
-    fetchTransactions();
+    await fetchCategories();
+    fetchTransactions(); // Garante que as transações são carregadas ao iniciar
 });

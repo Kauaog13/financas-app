@@ -13,13 +13,11 @@ exports.createTransaction = async (req, res) => {
     if (!['income', 'expense'].includes(type)) {
         return res.status(400).json({ message: 'Tipo de transação inválido. Deve ser "income" ou "expense".' });
     }
-    // category_id pode ser opcional (null no DB), mas se existir, deve ser um número válido
-    if (category_id !== null && isNaN(parseInt(category_id))) { // Verifica se não é null E não é um número
+    if (category_id !== null && isNaN(parseInt(category_id))) {
         return res.status(400).json({ message: 'ID da categoria inválido.' });
     }
 
     try {
-        // Usa category_id diretamente (já tratado para ser null ou number no frontend)
         const newTransactionId = await TransactionModel.createTransaction(userId, description, amount, type, date, category_id);
         res.status(201).json({ message: 'Transação criada com sucesso!', id: newTransactionId });
     } catch (error) {
@@ -70,13 +68,11 @@ exports.updateTransaction = async (req, res) => {
     if (!['income', 'expense'].includes(type)) {
         return res.status(400).json({ message: 'Tipo de transação inválido. Deve ser "income" ou "expense".' });
     }
-    // category_id pode ser opcional (null no DB), mas se existir, deve ser um número válido
-    if (category_id !== null && isNaN(parseInt(category_id))) { // Verifica se não é null E não é um número
+    if (category_id !== null && isNaN(parseInt(category_id))) {
         return res.status(400).json({ message: 'ID da categoria inválido.' });
     }
 
     try {
-        // Usa category_id diretamente (já tratado para ser null ou number no frontend)
         const updated = await TransactionModel.updateTransaction(parseInt(id), userId, description, amount, type, date, category_id);
         if (!updated) {
             return res.status(404).json({ message: 'Transação não encontrada ou você não tem permissão para atualizá-la.' });
@@ -88,11 +84,13 @@ exports.updateTransaction = async (req, res) => {
     }
 };
 
+// Função de Excluir Transação - Confirmada para estar correta
 exports.deleteTransaction = async (req, res) => {
-    const { id } = req.params;
-    const userId = req.user.id;
+    const { id } = req.params; // ID da transação da URL
+    const userId = req.user.id; // ID do usuário do token JWT
 
     try {
+        // O modelo exige o transactionId e o userId para garantir que o usuário só exclua suas próprias transações
         const deleted = await TransactionModel.deleteTransaction(parseInt(id), userId);
         if (!deleted) {
             return res.status(404).json({ message: 'Transação não encontrada ou você não tem permissão para excluí-la.' });

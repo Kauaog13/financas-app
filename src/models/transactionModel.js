@@ -40,12 +40,13 @@ class TransactionModel {
         return result.affectedRows > 0;
     }
 
+    // Método para Deletar Transação - Confirmado para estar correto
     static async deleteTransaction(transactionId, userId) {
         const [result] = await pool.execute(
-            'DELETE FROM transactions WHERE id = ? AND user_id = ?',
+            'DELETE FROM transactions WHERE id = ? AND user_id = ?', // Exclui apenas se ID e USER_ID corresponderem
             [transactionId, userId]
         );
-        return result.affectedRows > 0;
+        return result.affectedRows > 0; // Retorna true se alguma linha foi realmente deletada
     }
 }
 
