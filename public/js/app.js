@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const transactionList = document.getElementById('transactionList');
     const addTransactionBtn = document.getElementById('addTransactionBtn');
     const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
-    const exportTransactionsBtn = document.getElementById('exportTransactionsBtn'); // Botão de Exportar
+    const exportTransactionsBtn = document.getElementById('exportTransactionsBtn');
     const transactionFormModal = document.getElementById('transactionFormModal');
     const categoryManagementModal = document.getElementById('categoryManagementModal');
     const closeTransactionModalBtn = document.querySelector('#transactionFormModal .close-button');
@@ -24,6 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentBalanceElement = document.getElementById('currentBalance');
     const filterDescriptionInput = document.getElementById('filterDescription');
     const sortTypeSelect = document.getElementById('sortType');
+    // NOVO: Elementos para o gráfico
+    const expensePieChartCanvas = document.getElementById('expensePieChart');
+    const noExpenseDataMessage = document.getElementById('noExpenseDataMessage');
+
 
     const categoryIdInput = document.getElementById('categoryId');
     const categoryNameInput = document.getElementById('categoryName');
@@ -31,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let transactions = [];
     let categories = [];
+    let expensePieChartInstance = null; // Para armazenar a instância do gráfico e destruí-la quando necessário
 
     // --- Funções de Autenticação e Inicialização ---
     async function checkAuth() {
@@ -156,6 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 categoryForm.reset();
                 categoryIdInput.value = '';
                 fetchCategories();
+                fetchTransactions(); // Recarrega transações para atualizar o gráfico/lista se categorias mudarem
             } else {
                 alert(`Erro: ${data.message || response.statusText}`);
             }
@@ -222,6 +228,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 transactions = await response.json();
                 renderTransactions();
                 updateOverview();
+                // NOVO: Chama a função para renderizar o gráfico após buscar transações
+                renderExpensePieChart();
             } else {
                 console.error('Falha ao buscar transações:', response.statusText);
             }
@@ -291,6 +299,100 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentBalanceElement.textContent = `R$ ${currentBalance.toFixed(2).replace('.', ',')}`;
     }
 
+    // --- NOVO: Função para Renderizar o Gráfico de Despesas por Categoria ---
+    async function renderExpensePieChart() {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/reports/expenses-by-category', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Falha ao buscar dados do relatório:', response.statusText);
+                expensePieChartCanvas.style.display = 'none';
+                noExpenseDataMessage.style.display = 'block';
+                return;
+            }
+
+            const reportData = await response.json();
+            console.log("DEBUG: Dados do relatório de despesas por categoria:", reportData);
+
+            // Destrói a instância anterior do gráfico se ela existir
+            if (expensePieChartInstance) {
+                expensePieChartInstance.destroy();
+            }
+
+            if (reportData.length === 0) {
+                expensePieChartCanvas.style.display = 'none';
+                noExpenseDataMessage.style.display = 'block';
+                return;
+            } else {
+                expensePieChartCanvas.style.display = 'block';
+                noExpenseDataMessage.style.display = 'none';
+            }
+
+            const labels = reportData.map(item => item.category);
+            const data = reportData.map(item => parseFloat(item.total_amount));
+
+            // Gera cores aleatórias para as fatias do gráfico
+            const backgroundColors = data.map(() => {
+                const r = Math.floor(Math.random() * 255);
+                const g = Math.floor(Math.random() * 255);
+                const b = Math.floor(Math.random() * 255);
+                return `rgba(${r}, ${g}, ${b}, 0.7)`;
+            });
+            const borderColors = backgroundColors.map(color => color.replace('0.7', '1')); // Bordas mais escuras
+
+            const chartData = {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1
+                }]
+            };
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false, // Permite que o gráfico se ajuste ao tamanho do container
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += 'R$ ' + context.parsed.toFixed(2).replace('.', ',');
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            };
+
+            expensePieChartInstance = new Chart(expensePieChartCanvas, {
+                type: 'pie',
+                data: chartData,
+                options: chartOptions,
+            });
+
+        } catch (error) {
+            console.error('Erro ao renderizar gráfico de despesas:', error);
+            expensePieChartCanvas.style.display = 'none';
+            noExpenseDataMessage.style.display = 'block';
+        }
+    }
+
+
     // Event Listener para o formulário de Transação
     transactionForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -327,7 +429,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert('Transação salva com sucesso!');
                 transactionFormModal.style.display = 'none';
                 transactionForm.reset();
-                fetchTransactions();
+                fetchTransactions(); // Re-fetch para atualizar a lista e o gráfico
             } else {
                 const errorData = await response.json();
                 alert(`Erro ao salvar transação: ${errorData.message || response.statusText}`);
@@ -380,7 +482,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (response.ok) {
                     alert('Transação excluída com sucesso!');
-                    fetchTransactions();
+                    fetchTransactions(); // Re-fetch para atualizar a lista e o gráfico
                 } else {
                     const errorData = await response.json();
                     alert(`Erro ao excluir transação: ${errorData.message || response.statusText}`);
@@ -456,21 +558,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Pega o conteúdo da resposta como texto (o CSV)
             const csvText = await response.text();
 
-            // Cria um Blob (objeto binário grande) com o conteúdo CSV e tipo 'text/csv'
-            const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
-            const blobUrl = URL.createObjectURL(blob); // Cria um URL temporário para o Blob
+            // Se o backend retornou JSON com mensagem (sem transações), não tentar baixar
+            if (csvText.startsWith('{') && csvText.includes('message')) {
+                const data = JSON.parse(csvText);
+                alert(data.message);
+                return;
+            }
 
-            // Cria um link temporário para o download
+            const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+            const blobUrl = URL.createObjectURL(blob);
+
             const downloadLink = document.createElement('a');
             downloadLink.href = blobUrl;
-            downloadLink.download = 'transacoes.csv'; // Nome do arquivo para download
+            downloadLink.download = 'transacoes.csv';
             document.body.appendChild(downloadLink);
-            downloadLink.click(); // Simula um clique no link para iniciar o download
-            document.body.removeChild(downloadLink); // Remove o link temporário
-            URL.revokeObjectURL(blobUrl); // Libera o URL do Blob
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(blobUrl);
 
             alert('Exportação iniciada. Seu arquivo será baixado (verifique a pasta de downloads).');
 
@@ -502,5 +608,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Inicialização ---
     await checkAuth();
     await fetchCategories();
-    fetchTransactions();
+    fetchTransactions(); // Garante que as transações são carregadas ao iniciar e o gráfico é renderizado
 });

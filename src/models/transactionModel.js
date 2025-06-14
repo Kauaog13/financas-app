@@ -40,13 +40,26 @@ class TransactionModel {
         return result.affectedRows > 0;
     }
 
-    // Método para Deletar Transação - Confirmado para estar correto
     static async deleteTransaction(transactionId, userId) {
         const [result] = await pool.execute(
-            'DELETE FROM transactions WHERE id = ? AND user_id = ?', // Exclui apenas se ID e USER_ID corresponderem
+            'DELETE FROM transactions WHERE id = ? AND user_id = ?',
             [transactionId, userId]
         );
-        return result.affectedRows > 0; // Retorna true se alguma linha foi realmente deletada
+        return result.affectedRows > 0;
+    }
+
+    // NOVO MÉTODO: Para obter despesas agrupadas por categoria
+    static async getExpensesByCategory(userId) {
+        const [rows] = await pool.execute(
+            `SELECT c.name AS category, SUM(t.amount) AS total_amount
+             FROM transactions t
+             JOIN categories c ON t.category_id = c.id
+             WHERE t.user_id = ? AND t.type = 'expense'
+             GROUP BY c.name
+             ORDER BY total_amount DESC`,
+            [userId]
+        );
+        return rows;
     }
 }
 
