@@ -1,20 +1,31 @@
 {
   "name": "financas-app",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Sistema de controle de finanças pessoais com CRUD completo, autenticação e categorias.",
+  "main": "src/server.js",
   "scripts": {
+    "start": "node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "description": "",
+  "keywords": [
+    "financas",
+    "controle-financeiro",
+    "crud",
+    "node",
+    "express",
+    "mysql",
+    "javascript",
+    "html",
+    "css"
+  ],
+  "author": "Kauã Oliveira",
+  "license": "MIT",
   "dependencies": {
-    "bcryptjs": "^3.0.2",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
+    "@json2csv/node": "^7.0.6",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.14.1"
+    "mysql2": "^3.10.0"
   }
 }

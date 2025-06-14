@@ -1,10 +1,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // Declaração de elementos HTML - DEVE SER DENTRO DO DOMContentLoaded
+    // Declaração de elementos HTML
     const logoutBtn = document.getElementById('logoutBtn');
     const adminPanelBtn = document.getElementById('adminPanelBtn');
     const transactionList = document.getElementById('transactionList');
     const addTransactionBtn = document.getElementById('addTransactionBtn');
     const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
+    const exportTransactionsBtn = document.getElementById('exportTransactionsBtn'); // Botão de Exportar
     const transactionFormModal = document.getElementById('transactionFormModal');
     const categoryManagementModal = document.getElementById('categoryManagementModal');
     const closeTransactionModalBtn = document.querySelector('#transactionFormModal .close-button');
@@ -273,7 +274,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             transactionList.appendChild(li);
         });
 
-        // Corrigido: Garante que os listeners são adicionados APÓS a renderização
         addEventListenersToTransactionButtons();
     }
 
@@ -365,10 +365,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Função de Excluir Transação - Corrigida e com logs de depuração
+    // Função de Excluir Transação
     async function deleteTransaction(id) {
         const token = localStorage.getItem('token');
-        console.log("DEBUG: Tentando deletar transação com ID:", id); // Log para ver o ID
+        console.log("DEBUG: Tentando deletar transação com ID:", id);
         if (confirm('Tem certeza que deseja excluir esta transação?')) {
             try {
                 const response = await fetch(`/api/finance/transactions/${id}`, {
@@ -380,13 +380,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (response.ok) {
                     alert('Transação excluída com sucesso!');
-                    fetchTransactions(); // Recarrega a lista após exclusão
+                    fetchTransactions();
                 } else {
                     const errorData = await response.json();
                     alert(`Erro ao excluir transação: ${errorData.message || response.statusText}`);
                 }
             } catch (error) {
-                console.error('Erro na requisição DELETE:', error); // Log mais específico
+                console.error('Erro na requisição DELETE:', error);
                 alert('Erro ao comunicar com o servidor ao excluir transação.');
             }
         }
@@ -430,6 +430,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Event listener para o botão de Exportar Transações
+    exportTransactionsBtn.addEventListener('click', async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Você precisa estar logado para exportar transações.');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const exportUrl = '/api/export/transactions';
+
+        try {
+            const response = await fetch(exportUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(`Erro ao exportar transações: ${errorData.message || 'Erro desconhecido.'}`);
+                console.error("DEBUG: Resposta de erro da exportação:", errorData);
+                return;
+            }
+
+            // Pega o conteúdo da resposta como texto (o CSV)
+            const csvText = await response.text();
+
+            // Cria um Blob (objeto binário grande) com o conteúdo CSV e tipo 'text/csv'
+            const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+            const blobUrl = URL.createObjectURL(blob); // Cria um URL temporário para o Blob
+
+            // Cria um link temporário para o download
+            const downloadLink = document.createElement('a');
+            downloadLink.href = blobUrl;
+            downloadLink.download = 'transacoes.csv'; // Nome do arquivo para download
+            document.body.appendChild(downloadLink);
+            downloadLink.click(); // Simula um clique no link para iniciar o download
+            document.body.removeChild(downloadLink); // Remove o link temporário
+            URL.revokeObjectURL(blobUrl); // Libera o URL do Blob
+
+            alert('Exportação iniciada. Seu arquivo será baixado (verifique a pasta de downloads).');
+
+        } catch (error) {
+            console.error('DEBUG: Erro na requisição de exportação (código JS):', error);
+            alert('Erro ao comunicar com o servidor para exportar transações.');
+        }
+    });
+
+
     window.onclick = (event) => {
         if (event.target == transactionFormModal) {
             transactionFormModal.style.display = 'none';
@@ -451,5 +502,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Inicialização ---
     await checkAuth();
     await fetchCategories();
-    fetchTransactions(); // Garante que as transações são carregadas ao iniciar
+    fetchTransactions();
 });
