@@ -1,27 +1,29 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // Declaração de elementos HTML
+    // --- 1. DECLARAÇÃO DE ELEMENTOS HTML E VARIÁVEIS DE ESTADO ---
     const logoutBtn = document.getElementById('logoutBtn');
     const adminPanelBtn = document.getElementById('adminPanelBtn');
+    const darkModeToggle = document.getElementById('darkModeToggle');
     const transactionList = document.getElementById('transactionList');
     const addTransactionBtn = document.getElementById('addTransactionBtn');
     const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
     const exportTransactionsBtn = document.getElementById('exportTransactionsBtn');
-    // NOVO: Elementos para Orçamentos
     const manageBudgetsBtn = document.getElementById('manageBudgetsBtn');
     const budgetOverviewList = document.getElementById('budgetOverviewList');
     const noBudgetsMessage = document.getElementById('noBudgetsMessage');
 
     const transactionFormModal = document.getElementById('transactionFormModal');
     const categoryManagementModal = document.getElementById('categoryManagementModal');
-    const budgetManagementModal = document.getElementById('budgetManagementModal'); // NOVO: Modal de Orçamento
+    const budgetManagementModal = document.getElementById('budgetManagementModal');
 
     const closeTransactionModalBtn = document.querySelector('#transactionFormModal .close-button');
     const closeCategoryModalBtn = document.querySelector('#categoryManagementModal .close-button');
-    const closeBudgetModalBtn = document.querySelector('#budgetManagementModal .close-button'); // NOVO: Close button de Orçamento
+    const closeBudgetModalBtn = document.querySelector('#budgetManagementModal .close-button');
 
     const transactionForm = document.getElementById('transactionForm');
+    console.log("DEBUG: transactionForm element na declaração:", transactionForm);
+
     const categoryForm = document.getElementById('categoryForm');
-    const budgetForm = document.getElementById('budgetForm'); // NOVO: Formulário de Orçamento
+    const budgetForm = document.getElementById('budgetForm');
 
     const categoryListElement = document.getElementById('categoryList');
     const transactionIdInput = document.getElementById('transactionId');
@@ -36,7 +38,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filterDescriptionInput = document.getElementById('filterDescription');
     const sortTypeSelect = document.getElementById('sortType');
 
-    // Elementos de filtro
     const filterTypeSelect = document.getElementById('filterType');
     const filterCategorySelect = document.getElementById('filterCategory');
     const filterStartDateInput = document.getElementById('filterStartDate');
@@ -44,18 +45,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const applyFiltersBtn = document.getElementById('applyFiltersBtn');
     const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 
-    // Elementos para os gráficos
     const expensePieChartCanvas = document.getElementById('expensePieChart');
     const noExpenseDataMessage = document.getElementById('noExpenseDataMessage');
     const incomeBarChartCanvas = document.getElementById('incomeBarChart');
     const noIncomeDataMessage = document.getElementById('noIncomeDataMessage');
 
-
     const categoryIdInput = document.getElementById('categoryId');
     const categoryNameInput = document.getElementById('categoryName');
     const categoryTypeInput = document.getElementById('categoryType');
 
-    // NOVO: Elementos do formulário de orçamento
     const budgetIdInput = document.getElementById('budgetId');
     const budgetCategorySelect = document.getElementById('budgetCategory');
     const budgetAmountLimitInput = document.getElementById('budgetAmountLimit');
@@ -66,15 +64,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let transactions = [];
     let categories = [];
-    let budgets = []; // NOVO: Armazenará os orçamentos
+    let budgets = [];
     let expensePieChartInstance = null;
     let incomeBarChartInstance = null;
 
-    // --- Funções de Autenticação e Inicialização ---
+
+    // --- 2. DEFINIÇÕES DE TODAS AS FUNÇÕES ---
+
+    // Funções de Temas
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
+        const icon = darkModeToggle.querySelector('i');
+        if (icon) {
+            icon.classList.remove('fa-moon', 'fa-sun');
+            icon.classList.add(isDarkMode ? 'fa-sun' : 'fa-moon');
+        }
+    }
+
+    function loadDarkModePreference() {
+        const darkModePreference = localStorage.getItem('darkMode');
+        if (darkModePreference === 'enabled') {
+            document.body.classList.add('dark-mode');
+            const icon = darkModeToggle.querySelector('i');
+            if (icon) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+        }
+    }
+
+    // Funções de Autenticação
     async function checkAuth() {
         const token = localStorage.getItem('token');
         if (!token) {
-            window.location.href = 'login.html';
+            window.location.href = '/login';
         } else {
             try {
                 const response = await fetch('/api/auth/verify', {
@@ -101,91 +126,64 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     console.error("DEBUG: Verificação de token falhou:", response.status, response.statusText);
                     localStorage.removeItem('token');
-                    window.location.href = 'login.html';
+                    window.location.href = '/login';
                 }
             } catch (error) {
                 console.error('DEBUG: Erro ao verificar token:', error);
                 localStorage.removeItem('token');
-                window.location.href = 'login.html';
+                window.location.href = '/login';
             }
         }
     }
 
-    // --- Funções de Categorias ---
-    async function fetchCategories() {
-        const token = localStorage.getItem('token');
-        try {
-            const response = await fetch('/api/categories', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response.ok) {
-                categories = await response.json();
-                populateCategorySelect();
-                populateFilterCategorySelect();
-                populateBudgetCategorySelect(); // NOVO: Popular categorias no formulário de orçamento
-                renderCategoryList();
+    // Funções de CRUD (Edit/Delete - Transações, Categorias, Orçamentos)
+    async function editTransaction(id) {
+        console.log("DEBUG: editTransaction chamada para ID:", id);
+        const transaction = transactions.find(t => t.id === id);
+        if (transaction) {
+            transactionIdInput.value = transaction.id;
+            descriptionInput.value = transaction.description;
+            amountInput.value = parseFloat(transaction.amount);
+            typeInput.value = transaction.type;
+            dateInput.value = new Date(transaction.date).toISOString().split('T')[0];
+
+            await populateCategorySelect();
+            if (transaction.category_id) {
+                categorySelect.value = transaction.category_id;
             } else {
-                console.error('Falha ao buscar categorias:', response.statusText);
+                categorySelect.value = '';
             }
-        } catch (error) {
-            console.error('Erro ao buscar categorias:', error);
+
+            transactionFormModal.classList.add('is-visible');
         }
     }
 
-    function populateCategorySelect() {
-        categorySelect.innerHTML = '<option value="">Selecione uma Categoria</option>';
-        categories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = `${category.name} (${category.type === 'income' ? 'Receita' : 'Despesa'})`;
-            categorySelect.appendChild(option);
-        });
-    }
+    async function deleteTransaction(id) {
+        console.log("DEBUG: deleteTransaction chamada para ID:", id);
+        const token = localStorage.getItem('token');
+        console.log("DEBUG: Tentando deletar transação com ID:", id);
+        if (confirm('Tem certeza que deseja excluir esta transação?')) {
+            try {
+                const response = await fetch(`/api/finance/transactions/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
 
-    function populateFilterCategorySelect() {
-        filterCategorySelect.innerHTML = '<option value="">Todas as Categorias</option>';
-        categories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = `${category.name} (${category.type === 'income' ? 'Receita' : 'Despesa'})`;
-            filterCategorySelect.appendChild(option);
-        });
-    }
-
-    // NOVO: Função para popular o select de categoria no formulário de orçamento (apenas despesas)
-    function populateBudgetCategorySelect() {
-        budgetCategorySelect.innerHTML = '<option value="">Selecione uma Categoria de Despesa</option>';
-        const expenseCategories = categories.filter(cat => cat.type === 'expense');
-        expenseCategories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = category.name;
-            budgetCategorySelect.appendChild(option);
-        });
-    }
-
-    function renderCategoryList() {
-        categoryListElement.innerHTML = '';
-        if (categories.length === 0) {
-            categoryListElement.innerHTML = '<p style="text-align: center;">Nenhuma categoria cadastrada.</p>';
-            return;
+                if (response.ok) {
+                    alert('Transação excluída com sucesso!');
+                    fetchTransactions();
+                    fetchBudgets();
+                } else {
+                    const errorData = await response.json();
+                    alert(`Erro ao excluir transação: ${errorData.message || response.statusText}`);
+                }
+            } catch (error) {
+                console.error('Erro na requisição DELETE:', error);
+                alert('Erro ao comunicar com o servidor ao excluir transação.');
+            }
         }
-        categories.forEach(category => {
-            const li = document.createElement('li');
-            li.classList.add('category-item');
-            li.innerHTML = `
-                <span class="category-name-display">${category.name}</span>
-                <span class="category-type-display">(${category.type === 'income' ? 'Receita' : 'Despesa'})</span>
-                <div class="category-actions">
-                    <button class="btn btn-primary btn-sm edit-category-btn" data-id="${category.id}">Editar</button>
-                    <button class="btn btn-danger btn-sm delete-category-btn" data-id="${category.id}">Excluir</button>
-                </div>
-            `;
-            categoryListElement.appendChild(li);
-        });
-        addEventListenersToCategoryButtons();
     }
 
     async function addEditCategory() {
@@ -263,134 +261,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function addEventListenersToCategoryButtons() {
-        document.querySelectorAll('.edit-category-btn').forEach(button => {
-            button.onclick = () => editCategory(parseInt(button.dataset.id));
-        });
-        document.querySelectorAll('.delete-category-btn').forEach(button => {
-            button.onclick = () => deleteCategory(parseInt(button.dataset.id));
-        });
-    }
-
-    // --- Funções de Orçamentos ---
-    // Preenche o select de meses no formulário de orçamento
-    function populateBudgetMonths() {
-        budgetMonthSelect.innerHTML = '';
-        const monthNames = [
-            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-        ];
-        monthNames.forEach((name, index) => {
-            const option = document.createElement('option');
-            option.value = index + 1; // Mês 1-12
-            option.textContent = name;
-            budgetMonthSelect.appendChild(option);
-        });
-        // Seleciona o mês atual por padrão
-        budgetMonthSelect.value = new Date().getMonth() + 1;
-        budgetYearInput.value = new Date().getFullYear();
-    }
-
-    async function fetchBudgets() {
-        const token = localStorage.getItem('token');
-        // Filtra por mês e ano atuais para exibição na tela principal
-        const currentMonth = new Date().getMonth() + 1;
-        const currentYear = new Date().getFullYear();
-        const url = `/api/budgets?month=${currentMonth}&year=${currentYear}`;
-
-        try {
-            const response = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response.ok) {
-                budgets = await response.json();
-                renderBudgetOverview();
-                renderBudgetList(); // Para o modal de gerenciamento
-            } else {
-                console.error('Falha ao buscar orçamentos:', response.statusText);
-            }
-        } catch (error) {
-            console.error('Erro ao buscar orçamentos:', error);
-        }
-    }
-
-    function renderBudgetOverview() {
-        budgetOverviewList.innerHTML = '';
-        if (budgets.length === 0) {
-            noBudgetsMessage.style.display = 'block';
-            budgetOverviewList.style.display = 'none';
-            return;
-        }
-        noBudgetsMessage.style.display = 'none';
-        budgetOverviewList.style.display = 'grid'; // Grid display for current budgets
-
-        budgets.forEach(budget => {
-            const expensePercentage = (budget.current_expense / budget.amount_limit) * 100;
-            let progressBarClass = '';
-            if (expensePercentage >= 100) {
-                progressBarClass = 'danger';
-            } else if (expensePercentage >= 80) {
-                progressBarClass = 'warning';
-            }
-
-            const li = document.createElement('div'); // Usamos div para o item de orçamento para melhor layout
-            li.classList.add('budget-item');
-            li.innerHTML = `
-                <div class="budget-item-info">
-                    <span class="category-name-display">${budget.category_name}</span>
-                    <span class="budget-period">${budget.month}/${budget.year}</span>
-                </div>
-                <div class="budget-values">
-                    <span>Gasto: R$ ${budget.current_expense.toFixed(2).replace('.', ',')}</span> /
-                    <span>Limite: R$ ${budget.amount_limit.toFixed(2).replace('.', ',')}</span>
-                </div>
-                <div class="budget-progress-bar-container">
-                    <div class="budget-progress-bar-fill ${progressBarClass}" style="width: ${Math.min(expensePercentage, 100)}%;"></div>
-                </div>
-            `;
-            budgetOverviewList.appendChild(li);
-        });
-    }
-
-    function renderBudgetList() {
-        budgetListElement.innerHTML = ''; // Limpa a lista no modal
-        if (budgets.length === 0) {
-            budgetListElement.innerHTML = '<p style="text-align: center;">Nenhum orçamento definido.</p>';
-            return;
-        }
-
-        budgets.forEach(budget => {
-            const li = document.createElement('li');
-            li.classList.add('budget-item-modal'); // Nova classe para itens do modal
-            li.innerHTML = `
-                <div class="budget-item-info">
-                    <span class="category-name-display">${budget.category_name}</span>
-                    <span class="budget-period">${budget.month}/${budget.year}</span>
-                </div>
-                <div class="budget-values">
-                    <span>Limite: R$ ${budget.amount_limit.toFixed(2).replace('.', ',')}</span>
-                </div>
-                <div class="budget-actions">
-                    <button class="btn btn-primary btn-sm edit-budget-btn" data-id="${budget.id}">Editar</button>
-                    <button class="btn btn-danger btn-sm delete-budget-btn" data-id="${budget.id}">Excluir</button>
-                </div>
-            `;
-            budgetListElement.appendChild(li);
-        });
-        addEventListenersToBudgetButtons();
-    }
-
-    function addEventListenersToBudgetButtons() {
-        document.querySelectorAll('.edit-budget-btn').forEach(button => {
-            button.onclick = () => editBudget(parseInt(button.dataset.id));
-        });
-        document.querySelectorAll('.delete-budget-btn').forEach(button => {
-            button.onclick = () => deleteBudget(parseInt(button.dataset.id));
-        });
-    }
-
     async function addEditBudget() {
         const token = localStorage.getItem('token');
         const budgetId = budgetIdInput.value;
@@ -428,7 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert(data.message);
                 budgetForm.reset();
                 budgetIdInput.value = '';
-                fetchBudgets(); // Recarrega orçamentos
+                fetchBudgets();
             } else {
                 alert(`Erro: ${data.message || response.statusText}`);
             }
@@ -452,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const data = await response.json();
                 if (response.ok) {
                     alert(data.message);
-                    fetchBudgets(); // Recarrega orçamentos
+                    fetchBudgets();
                 } else {
                     alert(`Erro: ${data.message || response.statusText}`);
                 }
@@ -475,46 +345,141 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- Funções de Transações (com integração de Filtros e Categorias) ---
-    async function fetchTransactions() {
-        const token = localStorage.getItem('token');
 
-        const filters = {
-            description: filterDescriptionInput.value,
-            type: filterTypeSelect.value,
-            categoryId: filterCategorySelect.value,
-            startDate: filterStartDateInput.value,
-            endDate: filterEndDateInput.value
-        };
+    // Funções de População/Renderização do DOM
+    function populateCategorySelect() {
+        categorySelect.innerHTML = '<option value="">Selecione uma Categoria</option>';
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = `${category.name} (${category.type === 'income' ? 'Receita' : 'Despesa'})`;
+            categorySelect.appendChild(option);
+        });
+    }
 
-        const queryParams = new URLSearchParams();
-        for (const key in filters) {
-            if (filters[key]) {
-                queryParams.append(key, filters[key]);
-            }
+    function populateFilterCategorySelect() {
+        filterCategorySelect.innerHTML = '<option value="">Todas as Categorias</option>';
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = `${category.name} (${category.type === 'income' ? 'Receita' : 'Despesa'})`;
+            filterCategorySelect.appendChild(option);
+        });
+    }
+
+    function populateBudgetCategorySelect() {
+        budgetCategorySelect.innerHTML = '<option value="">Selecione uma Categoria de Despesa</option>';
+        const expenseCategories = categories.filter(cat => cat.type === 'expense');
+        expenseCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            budgetCategorySelect.appendChild(option);
+        });
+    }
+
+    function renderCategoryList() {
+        categoryListElement.innerHTML = '';
+        if (categories.length === 0) {
+            categoryListElement.innerHTML = '<p style="text-align: center;">Nenhuma categoria cadastrada.</p>';
+            return;
         }
-        const url = `/api/finance/transactions?${queryParams.toString()}`;
-        console.log("DEBUG: URL de requisição de transações:", url);
+        categories.forEach(category => {
+            const li = document.createElement('li');
+            li.classList.add('category-item');
+            li.innerHTML = `
+                <span class="category-name-display">${category.name}</span>
+                <span class="category-type-display">(${category.type === 'income' ? 'Receita' : 'Despesa'})</span>
+                <div class="category-actions">
+                    <button class="btn btn-primary btn-sm edit-category-btn" data-id="${category.id}"><i class="fas fa-edit"></i> Editar</button>
+                    <button class="btn btn-danger btn-sm delete-category-btn" data-id="${category.id}"><i class="fas fa-trash-alt"></i> Excluir</button>
+                </div>
+            `;
+            categoryListElement.appendChild(li);
+        });
+        addEventListenersToCategoryButtons();
+    }
 
+    function populateBudgetMonths() {
+        budgetMonthSelect.innerHTML = '';
+        const monthNames = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+        monthNames.forEach((name, index) => {
+            const option = document.createElement('option');
+            option.value = index + 1;
+            option.textContent = name;
+            budgetMonthSelect.appendChild(option);
+        });
+        budgetMonthSelect.value = new Date().getMonth() + 1;
+        budgetYearInput.value = new Date().getFullYear();
+    }
 
-        try {
-            const response = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response.ok) {
-                transactions = await response.json();
-                renderTransactions();
-                updateOverview();
-                renderExpensePieChart();
-                renderIncomeBarChart();
-            } else {
-                console.error('Falha ao buscar transações:', response.statusText);
-            }
-        } catch (error) {
-            console.error('Erro ao buscar transações:', error);
+    function renderBudgetOverview() {
+        budgetOverviewList.innerHTML = '';
+        if (budgets.length === 0) {
+            noBudgetsMessage.style.display = 'block';
+            budgetOverviewList.style.display = 'none';
+            return;
         }
+        noBudgetsMessage.style.display = 'none';
+        budgetOverviewList.style.display = 'grid';
+
+        budgets.forEach(budget => {
+            const expensePercentage = (budget.current_expense / budget.amount_limit) * 100;
+            let progressBarClass = '';
+            if (expensePercentage >= 100) {
+                progressBarClass = 'danger';
+            } else if (expensePercentage >= 80) {
+                progressBarClass = 'warning';
+            }
+
+            const li = document.createElement('div');
+            li.classList.add('budget-item');
+            li.innerHTML = `
+                <div class="budget-item-info">
+                    <span class="category-name-display">${budget.category_name}</span>
+                    <span class="budget-period">${budget.month}/${budget.year}</span>
+                </div>
+                <div class="budget-values">
+                    <span>Gasto: R$ ${budget.current_expense.toFixed(2).replace('.', ',')}</span> /
+                    <span>Limite: R$ ${budget.amount_limit.toFixed(2).replace('.', ',')}</span>
+                </div>
+                <div class="budget-progress-bar-container">
+                    <div class="budget-progress-bar-fill ${progressBarClass}" style="width: ${Math.min(expensePercentage, 100)}%;"></div>
+                </div>
+            `;
+            budgetOverviewList.appendChild(li);
+        });
+    }
+
+    function renderBudgetList() {
+        budgetListElement.innerHTML = '';
+        if (budgets.length === 0) {
+            budgetListElement.innerHTML = '<p style="text-align: center;">Nenhuma orçamento definido.</p>';
+            return;
+        }
+
+        budgets.forEach(budget => {
+            const li = document.createElement('li');
+            li.classList.add('budget-item-modal');
+            li.innerHTML = `
+                <div class="budget-item-info">
+                    <span class="category-name-display">${budget.category_name}</span>
+                    <span class="budget-period">${budget.month}/${budget.year}</span>
+                </div>
+                <div class="budget-values">
+                    <span>Limite: R$ ${budget.amount_limit.toFixed(2).replace('.', ',')}</span>
+                </div>
+                <div class="budget-actions">
+                    <button class="btn btn-primary btn-sm edit-budget-btn" data-id="${budget.id}"><i class="fas fa-edit"></i> Editar</button>
+                    <button class="btn btn-danger btn-sm delete-budget-btn" data-id="${budget.id}"><i class="fas fa-trash-alt"></i> Excluir</button>
+                </div>
+            `;
+            budgetListElement.appendChild(li);
+        });
+        addEventListenersToBudgetButtons();
     }
 
     function renderTransactions() {
@@ -552,8 +517,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <span class="amount">${transaction.type === 'income' ? '+' : '-'} R$ ${parseFloat(transaction.amount).toFixed(2).replace('.', ',')}</span>
                 <span class="date">${new Date(transaction.date).toLocaleDateString('pt-BR')}</span>
                 <div class="transaction-actions">
-                    <button class="btn btn-primary edit-btn" data-id="${transaction.id}">Editar</button>
-                    <button class="btn btn-danger delete-btn" data-id="${transaction.id}">Excluir</button>
+                    <button class="btn btn-primary btn-sm edit-btn" data-id="${transaction.id}"><i class="fas fa-edit"></i> Editar</button>
+                    <button class="btn btn-danger btn-sm delete-btn" data-id="${transaction.id}"><i class="fas fa-trash-alt"></i> Excluir</button>
                 </div>
             `;
             transactionList.appendChild(li);
@@ -563,20 +528,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function updateOverview() {
-        const totalIncome = transactions
+        const totalIncomeGlobal = transactions
             .filter(t => t.type === 'income')
             .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-        const totalExpense = transactions
+        const totalExpenseGlobal = transactions
             .filter(t => t.type === 'expense')
             .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-        const currentBalance = totalIncome - totalExpense;
 
-        totalIncomeElement.textContent = `R$ ${totalIncome.toFixed(2).replace('.', ',')}`;
-        totalExpenseElement.textContent = `R$ ${totalExpense.toFixed(2).replace('.', ',')}`;
-        currentBalanceElement.textContent = `R$ ${currentBalance.toFixed(2).replace('.', ',')}`;
+        totalIncomeElement.textContent = `R$ ${totalIncomeGlobal.toFixed(2).replace('.', ',')}`;
+        totalExpenseElement.textContent = `R$ ${totalExpenseGlobal.toFixed(2).replace('.', ',')}`;
+
+        const currentBalanceGlobal = totalIncomeGlobal - totalExpenseGlobal;
+        currentBalanceElement.textContent = `R$ ${currentBalanceGlobal.toFixed(2).replace('.', ',')}`;
     }
 
-    // --- Função para Renderizar o Gráfico de Despesas por Categoria ---
     async function renderExpensePieChart() {
         const token = localStorage.getItem('token');
         try {
@@ -672,7 +637,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- Função para Renderizar o Gráfico de Barras de Receitas ---
     async function renderIncomeBarChart() {
         const token = localStorage.getItem('token');
         try {
@@ -774,171 +738,278 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-
-    // Event Listener para o formulário de Transação
-    transactionForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    // --- ADDED: fetch functions (moved from later in the file) ---
+    async function fetchTransactions() {
         const token = localStorage.getItem('token');
-        const transactionId = transactionIdInput.value;
-        const description = descriptionInput.value;
-        const amount = parseFloat(amountInput.value);
-        const type = typeInput.value;
-        const category_id = categorySelect.value ? parseInt(categorySelect.value) : null;
-        const date = dateInput.value;
-
-        const transactionData = { description, amount, type, date, category_id };
-        console.log("DEBUG: Dados da Transação a serem enviados:", transactionData);
-
-        let url = '/api/finance/transactions';
-        let method = 'POST';
-
-        if (transactionId) {
-            url = `/api/finance/transactions/${transactionId}`;
-            method = 'PUT';
+        const queryParams = new URLSearchParams();
+        if (filterDescriptionInput.value) {
+            queryParams.append('description', filterDescriptionInput.value);
+        }
+        if (filterTypeSelect.value) {
+            queryParams.append('type', filterTypeSelect.value);
+        }
+        if (filterCategorySelect.value) {
+            queryParams.append('categoryId', filterCategorySelect.value);
+        }
+        if (filterStartDateInput.value) {
+            queryParams.append('startDate', filterStartDateInput.value);
+        }
+        if (filterEndDateInput.value) {
+            queryParams.append('endDate', filterEndDateInput.value);
         }
 
         try {
-            const response = await fetch(url, {
-                method: method,
+            const response = await fetch(`/api/finance/transactions?${queryParams.toString()}`, {
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(transactionData)
+                }
             });
-
             if (response.ok) {
-                alert('Transação salva com sucesso!');
-                transactionFormModal.style.display = 'none';
-                transactionForm.reset();
-                fetchTransactions();
-                fetchBudgets(); // Atualiza orçamentos após nova transação
+                transactions = await response.json();
+                renderTransactions();
+                updateOverview();
+                renderExpensePieChart();
+                renderIncomeBarChart();
             } else {
-                const errorData = await response.json();
-                alert(`Erro ao salvar transação: ${errorData.message || response.statusText}`);
+                console.error("DEBUG: Falha ao buscar transações:", response.status, response.statusText);
+                transactions = [];
+                renderTransactions();
+                updateOverview();
+                renderExpensePieChart();
+                renderIncomeBarChart();
             }
         } catch (error) {
-            console.error('Erro na requisição:', error);
-            alert('Erro ao comunicar com o servidor.');
+            console.error('DEBUG: Erro ao buscar transações:', error);
+            alert('Erro ao comunicar com o servidor ao buscar transações.');
+            transactions = [];
+            renderTransactions();
+            updateOverview();
+            renderExpensePieChart();
+            renderIncomeBarChart();
         }
-    });
+    }
 
-    // Event Listener para o formulário de Categoria
+    async function fetchCategories() {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/categories', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                categories = await response.json();
+                populateCategorySelect();
+                populateFilterCategorySelect();
+                populateBudgetCategorySelect();
+                renderCategoryList();
+            } else {
+                console.error("DEBUG: Falha ao buscar categorias:", response.status, response.statusText);
+                categories = [];
+                populateCategorySelect();
+                populateFilterCategorySelect();
+                populateBudgetCategorySelect();
+                renderCategoryList();
+            }
+        } catch (error) {
+            console.error('DEBUG: Erro ao buscar categorias:', error);
+            alert('Erro ao comunicar com o servidor ao buscar categorias.');
+            categories = [];
+            populateCategorySelect();
+            populateFilterCategorySelect();
+            populateBudgetCategorySelect();
+            renderCategoryList();
+        }
+    }
+
+    async function fetchBudgets() {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/budgets', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                budgets = await response.json();
+                renderBudgetOverview();
+                renderBudgetList();
+            } else {
+                console.error("DEBUG: Falha ao buscar orçamentos:", response.status, response.statusText);
+                budgets = [];
+                renderBudgetOverview();
+                renderBudgetList();
+            }
+        } catch (error) {
+            console.error('DEBUG: Erro ao buscar orçamentos:', error);
+            alert('Erro ao comunicar com o servidor ao buscar orçamentos.');
+            budgets = [];
+            renderBudgetOverview();
+            renderBudgetList();
+        }
+    }
+
+    // Event listeners for transaction and category buttons (delegation)
+    function addEventListenersToTransactionButtons() {
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.onclick = (e) => editTransaction(parseInt(e.currentTarget.dataset.id));
+        });
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.onclick = (e) => deleteTransaction(parseInt(e.currentTarget.dataset.id));
+        });
+    }
+
+    function addEventListenersToCategoryButtons() {
+        document.querySelectorAll('.edit-category-btn').forEach(button => {
+            button.onclick = (e) => editCategory(parseInt(e.currentTarget.dataset.id));
+        });
+        document.querySelectorAll('.delete-category-btn').forEach(button => {
+            button.onclick = (e) => deleteCategory(parseInt(e.currentTarget.dataset.id));
+        });
+    }
+
+    function addEventListenersToBudgetButtons() {
+        document.querySelectorAll('.edit-budget-btn').forEach(button => {
+            button.onclick = (e) => editBudget(parseInt(e.currentTarget.dataset.id));
+        });
+        document.querySelectorAll('.delete-budget-btn').forEach(button => {
+            button.onclick = (e) => deleteBudget(parseInt(e.currentTarget.dataset.id));
+        });
+    }
+
+
+    // --- 3. EVENT LISTENERS (Chamadas para botões e formulários globais) ---
+
+    // Transações - Formulário dentro do Modal
+    if (transactionForm) {
+        transactionForm.addEventListener('submit', async (e) => {
+            console.log("DEBUG: Evento de submit do formulário de transação DISPARADO!");
+            e.preventDefault();
+
+            const token = localStorage.getItem('token');
+            const transactionId = transactionIdInput.value;
+            const description = descriptionInput.value;
+            const amount = parseFloat(amountInput.value);
+            const type = typeInput.value;
+            const category_id = categorySelect.value ? parseInt(categorySelect.value) : null;
+            const date = dateInput.value;
+
+            const transactionData = { description, amount, type, date, category_id };
+            console.log("DEBUG: Dados da Transação a serem enviados:", transactionData);
+
+            let url = '/api/finance/transactions';
+            let method = 'POST';
+
+            if (transactionId) {
+                url = `/api/finance/transactions/${transactionId}`;
+                method = 'PUT';
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(transactionData)
+                });
+
+                if (response.ok) {
+                    alert('Transação salva com sucesso!');
+                    transactionFormModal.classList.remove('is-visible');
+                    transactionForm.reset();
+                    fetchTransactions();
+                    fetchBudgets();
+                } else {
+                    const errorData = await response.json();
+                    alert(`Erro ao salvar transação: ${errorData.message || response.statusText}`);
+                }
+            }
+            catch (error) {
+                console.error('Erro na requisição:', error);
+                alert('Erro ao comunicar com o servidor.');
+            }
+        });
+    } else {
+        console.error("ERRO: Elemento transactionForm não encontrado para anexar listener de submit.");
+    }
+
+    addTransactionBtn.onclick = async () => {
+        console.log("DEBUG: Botão 'Adicionar Nova Transação' clicado!");
+        console.log("DEBUG: Verificando se transactionFormModal existe:", transactionFormModal);
+        if (!transactionFormModal) {
+            console.error("ERRO: transactionFormModal não encontrado.");
+            return;
+        }
+
+        transactionIdInput.value = '';
+        transactionForm.reset();
+        await populateCategorySelect();
+        categorySelect.value = '';
+        transactionFormModal.classList.add('is-visible');
+        console.log("DEBUG: Classe 'is-visible' adicionada ao modal de transação.");
+    };
+    closeTransactionModalBtn.onclick = () => {
+        console.log("DEBUG: Botão de fechar modal de transação clicado!");
+        transactionFormModal.classList.remove('is-visible');
+    };
+
+    // Categorias
     categoryForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         await addEditCategory();
     });
 
-    // Preencher formulário de transação para edição
-    async function editTransaction(id) {
-        const transaction = transactions.find(t => t.id === id);
-        if (transaction) {
-            transactionIdInput.value = transaction.id;
-            descriptionInput.value = transaction.description;
-            amountInput.value = parseFloat(transaction.amount);
-            typeInput.value = transaction.type;
-            dateInput.value = new Date(transaction.date).toISOString().split('T')[0];
-
-            await populateCategorySelect();
-            if (transaction.category_id) {
-                categorySelect.value = transaction.category_id;
-            } else {
-                categorySelect.value = '';
-            }
-
-            transactionFormModal.style.display = 'flex';
-        }
-    }
-
-    // Função de Excluir Transação
-    async function deleteTransaction(id) {
-        const token = localStorage.getItem('token');
-        console.log("DEBUG: Tentando deletar transação com ID:", id);
-        if (confirm('Tem certeza que deseja excluir esta transação?')) {
-            try {
-                const response = await fetch(`/api/finance/transactions/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.ok) {
-                    alert('Transação excluída com sucesso!');
-                    fetchTransactions();
-                    fetchBudgets(); // Atualiza orçamentos após exclusão de transação
-                } else {
-                    const errorData = await response.json();
-                    alert(`Erro ao excluir transação: ${errorData.message || response.statusText}`);
-                }
-            } catch (error) {
-                console.error('Erro na requisição DELETE:', error);
-                alert('Erro ao comunicar com o servidor ao excluir transação.');
-            }
-        }
-    }
-
-    // Adiciona Event Listeners para os botões de Editar e Excluir
-    function addEventListenersToTransactionButtons() {
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.onclick = () => editTransaction(parseInt(button.dataset.id));
-        });
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.onclick = () => deleteTransaction(parseInt(button.dataset.id));
-        });
-    }
-
-    // --- Event Listeners dos Modais e Botões ---
-    addTransactionBtn.onclick = async () => {
-        transactionIdInput.value = '';
-        transactionForm.reset();
-        await populateCategorySelect();
-        categorySelect.value = '';
-        transactionFormModal.style.display = 'flex';
-    };
-    closeTransactionModalBtn.onclick = () => {
-        transactionFormModal.style.display = 'none';
-    };
-
     manageCategoriesBtn.onclick = async () => {
+        console.log("DEBUG: Botão 'Gerenciar Categorias' clicado!");
         categoryForm.reset();
         categoryIdInput.value = '';
         await fetchCategories();
-        categoryManagementModal.style.display = 'flex';
+        categoryManagementModal.classList.add('is-visible');
     };
     closeCategoryModalBtn.onclick = () => {
-        categoryManagementModal.style.display = 'none';
+        console.log("DEBUG: Botão de fechar modal de categoria clicado!");
+        categoryManagementModal.classList.remove('is-visible');
     };
 
-    // NOVO: Listeners para Orçamentos
-    manageBudgetsBtn.onclick = async () => {
-        budgetForm.reset();
-        budgetIdInput.value = '';
-        populateBudgetMonths(); // Preenche meses e ano
-        await fetchCategories(); // Garante categorias para o select
-        await fetchBudgets(); // Busca todos os orçamentos para listar no modal
-        budgetManagementModal.style.display = 'flex';
-    };
-    closeBudgetModalBtn.onclick = () => {
-        budgetManagementModal.style.display = 'none';
-    };
+    // Orçamentos
     budgetForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         await addEditBudget();
     });
 
+    manageBudgetsBtn.onclick = async () => {
+        console.log("DEBUG: Botão 'Gerenciar Orçamentos' clicado!");
+        budgetForm.reset();
+        budgetIdInput.value = '';
+        populateBudgetMonths();
+        await fetchCategories();
+        await fetchBudgets();
+        budgetManagementModal.classList.add('is-visible');
+    };
+    closeBudgetModalBtn.onclick = () => {
+        console.log("DEBUG: Botão de fechar modal de orçamento clicado!");
+        budgetManagementModal.classList.remove('is-visible');
+    };
+
+
+    // Outros Botões Globais
     if (adminPanelBtn) {
         adminPanelBtn.addEventListener('click', () => {
             window.location.href = 'admin.html';
         });
     }
 
-    // Event listener para o botão de Exportar Transações
+    // Botão de Modo Escuro
+    darkModeToggle.addEventListener('click', toggleDarkMode);
+
+
     exportTransactionsBtn.addEventListener('click', async () => {
         const token = localStorage.getItem('token');
         if (!token) {
             alert('Você precisa estar logado para exportar transações.');
-            window.location.href = 'login.html';
+            window.location.href = '/login';
             return;
         }
 
@@ -988,18 +1059,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     window.onclick = (event) => {
-        if (event.target == transactionFormModal) {
-            transactionFormModal.style.display = 'none';
+        if (event.target === transactionFormModal) {
+            transactionFormModal.classList.remove('is-visible');
         }
-        if (event.target == categoryManagementModal) {
-            categoryManagementModal.style.display = 'none';
+        if (event.target === categoryManagementModal) {
+            categoryManagementModal.classList.remove('is-visible');
         }
-        if (event.target == budgetManagementModal) { // NOVO: Fechar modal de orçamento
-            budgetManagementModal.style.display = 'none';
+        if (event.target === budgetManagementModal) {
+            budgetManagementModal.classList.remove('is-visible');
         }
     };
 
-    // Event listeners para os filtros
+    // Filtros
     applyFiltersBtn.addEventListener('click', fetchTransactions);
     resetFiltersBtn.addEventListener('click', () => {
         filterDescriptionInput.value = '';
@@ -1016,19 +1087,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     filterStartDateInput.addEventListener('change', () => { /* Não dispara fetch aqui, espera botão */ });
     filterEndDateInput.addEventListener('change', () => { /* Não dispara fetch aqui, espera botão */ });
 
-
     sortTypeSelect.addEventListener('change', renderTransactions);
 
+    // Logout
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('token');
-        window.location.href = 'login.html';
+        window.location.href = '/login';
     });
 
     typeInput.addEventListener('change', populateCategorySelect);
 
-    // --- Inicialização ---
+
+    // --- 4. INICIALIZAÇÃO DA APLICAÇÃO ---
+    console.log("DEBUG: Iniciando a aplicação...");
+    loadDarkModePreference();
     await checkAuth();
     await fetchCategories();
-    fetchTransactions(); // Inicia o fetch que vai atualizar transações, visão geral e gráficos
-    fetchBudgets(); // NOVO: Busca e renderiza os orçamentos
+    fetchTransactions();
+    fetchBudgets();
+    console.log("DEBUG: Inicialização da aplicação concluída.");
 });

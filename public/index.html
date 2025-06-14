@@ -6,127 +6,129 @@
     <title>Controle de Finanças</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
     <header class="header">
         <div class="container">
-            <h1>Controle de Finanças</h1>
+            <h1>Controle de Finanças <i class="fas fa-wallet"></i></h1>
             <nav>
-                <button id="adminPanelBtn" class="btn btn-primary" style="display: none;">Painel Admin</button>
-                <button id="logoutBtn" class="btn btn-secondary">Sair</button>
+                <button id="adminPanelBtn" class="btn btn-primary" style="display: none;"><i class="fas fa-user-shield"></i> Painel Admin</button>
+                <button id="darkModeToggle" class="btn btn-secondary"><i class="fas fa-moon"></i></button>
+                <button id="logoutBtn" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i> Sair</button>
             </nav>
         </div>
     </header>
 
     <main class="container">
-        <section class="overview-section">
-            <h2>Resumo das Finanças</h2>
+        <section class="overview-section card-base">
+            <h2>Resumo das Finanças <i class="fas fa-chart-line"></i></h2>
             <div class="overview-cards">
                 <div class="card income-card">
-                    <h3>Receitas</h3>
+                    <h3>Receitas <i class="fas fa-plus-circle"></i></h3>
                     <p id="totalIncome">R$ 0.00</p>
                 </div>
                 <div class="card expense-card">
-                    <h3>Despesas</h3>
+                    <h3>Despesas <i class="fas fa-minus-circle"></i></h3>
                     <p id="totalExpense">R$ 0.00</p>
                 </div>
                 <div class="card balance-card">
-                    <h3>Saldo</h3>
+                    <h3>Saldo Geral <i class="fas fa-balance-scale"></i></h3>
                     <p id="currentBalance">R$ 0.00</p>
                 </div>
             </div>
         </section>
 
-        <section class="chart-section">
-            <h2>Despesas por Categoria</h2>
+        <section class="chart-section card-base">
+            <h2>Despesas por Categoria <i class="fas fa-chart-pie"></i></h2>
             <div class="chart-container">
                 <canvas id="expensePieChart"></canvas>
             </div>
-            <p id="noExpenseDataMessage" style="text-align: center; display: none;">
-                Adicione algumas despesas para ver o gráfico!
+            <p id="noExpenseDataMessage" class="message-info" style="display: none;">
+                <i class="fas fa-info-circle"></i> Adicione algumas despesas para ver o gráfico!
             </p>
         </section>
 
-        <section class="chart-section">
-            <h2>Receitas por Categoria</h2>
+        <section class="chart-section card-base">
+            <h2>Receitas por Categoria <i class="fas fa-chart-bar"></i></h2>
             <div class="chart-container">
                 <canvas id="incomeBarChart"></canvas>
             </div>
-            <p id="noIncomeDataMessage" style="text-align: center; display: none;">
-                Adicione algumas receitas para ver o gráfico!
+            <p id="noIncomeDataMessage" class="message-info" style="display: none;">
+                <i class="fas fa-info-circle"></i> Adicione algumas receitas para ver o gráfico!
             </p>
         </section>
 
-        <section class="budgets-section">
-            <h2>Meus Orçamentos Mensais</h2>
-            <button id="manageBudgetsBtn" class="btn btn-info">Gerenciar Orçamentos</button>
+        <section class="budgets-section card-base">
+            <h2>Meus Orçamentos Mensais <i class="fas fa-bullseye"></i></h2>
+            <button id="manageBudgetsBtn" class="btn btn-info"><i class="fas fa-cog"></i> Gerenciar Orçamentos</button>
             <div class="budget-overview-list" id="budgetOverviewList">
-                <p id="noBudgetsMessage" style="text-align: center; margin-top: 15px; display: none;">
-                    Você ainda não tem orçamentos definidos para este mês.
+                <p id="noBudgetsMessage" class="message-info" style="display: none;">
+                    <i class="fas fa-info-circle"></i> Você ainda não tem orçamentos definidos para este mês.
                 </p>
             </div>
         </section>
 
 
-        <section class="transactions-section">
-            <h2>Minhas Transações</h2>
-            <button id="addTransactionBtn" class="btn btn-primary">Adicionar Nova Transação</button>
-            <button id="manageCategoriesBtn" class="btn btn-info">Gerenciar Categorias</button>
-            <button id="exportTransactionsBtn" class="btn btn-primary">Exportar Transações</button>
+        <section class="transactions-section card-base">
+            <h2>Minhas Transações <i class="fas fa-exchange-alt"></i></h2>
+            <button id="addTransactionBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Adicionar Nova Transação</button>
+            <button id="manageCategoriesBtn" class="btn btn-info"><i class="fas fa-tags"></i> Gerenciar Categorias</button>
+            <button id="exportTransactionsBtn" class="btn btn-primary"><i class="fas fa-file-export"></i> Exportar Transações</button>
 
             <div id="transactionFormModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-button">&times;</span>
-                    <h3>Adicionar/Editar Transação</h3>
+                    <span class="close-button"><i class="fas fa-times"></i></span>
+                    <h3><i class="fas fa-hand-holding-usd"></i> Adicionar/Editar Transação</h3>
                     <form id="transactionForm">
                         <input type="hidden" id="transactionId">
                         <div class="form-group">
-                            <label for="description">Descrição:</label>
-                            <input type="text" id="description" required>
+                            <label for="description"><i class="fas fa-align-left"></i> Descrição:</label>
+                            <input type="text" id="description" required placeholder="Ex: Conta de Luz">
                         </div>
                         <div class="form-group">
-                            <label for="amount">Valor:</label>
-                            <input type="number" id="amount" step="0.01" required>
+                            <label for="amount"><i class="fas fa-dollar-sign"></i> Valor:</label>
+                            <input type="number" id="amount" step="0.01" required placeholder="0.00">
                         </div>
                         <div class="form-group">
-                            <label for="type">Tipo:</label>
+                            <label for="type"><i class="fas fa-sort"></i> Tipo:</label>
                             <select id="type" required>
                                 <option value="income">Receita</option>
                                 <option value="expense">Despesa</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="category">Categoria:</label>
+                            <label for="category"><i class="fas fa-tag"></i> Categoria:</label>
                             <select id="category" required>
                                 </select>
                         </div>
                         <div class="form-group">
-                            <label for="date">Data:</label>
+                            <label for="date"><i class="fas fa-calendar-alt"></i> Data:</label>
                             <input type="date" id="date" required>
                         </div>
-                        <button type="submit" class="btn btn-success">Salvar Transação</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Salvar Transação</button>
                     </form>
                 </div>
             </div>
 
             <div id="categoryManagementModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-button category-close-button">&times;</span>
-                    <h3>Gerenciar Categorias</h3>
+                    <span class="close-button category-close-button"><i class="fas fa-times"></i></span>
+                    <h3><i class="fas fa-tags"></i> Gerenciar Categorias</h3>
                     <form id="categoryForm">
                         <input type="hidden" id="categoryId">
                         <div class="form-group">
-                            <label for="categoryName">Nome da Categoria:</label>
-                            <input type="text" id="categoryName" required>
+                            <label for="categoryName"><i class="fas fa-font"></i> Nome da Categoria:</label>
+                            <input type="text" id="categoryName" required placeholder="Ex: Alimentação">
                         </div>
                         <div class="form-group">
-                            <label for="categoryType">Tipo:</label>
+                            <label for="categoryType"><i class="fas fa-sort"></i> Tipo:</label>
                             <select id="categoryType" required>
                                 <option value="income">Receita</option>
                                 <option value="expense">Despesa</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-success">Salvar Categoria</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-plus-circle"></i> Salvar Categoria</button>
                     </form>
                     <hr>
                     <h4>Minhas Categorias</h4>
@@ -137,29 +139,29 @@
 
             <div id="budgetManagementModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-button budget-close-button">&times;</span>
-                    <h3>Gerenciar Orçamentos</h3>
+                    <span class="close-button budget-close-button"><i class="fas fa-times"></i></span>
+                    <h3><i class="fas fa-money-check-alt"></i> Gerenciar Orçamentos</h3>
                     <form id="budgetForm">
                         <input type="hidden" id="budgetId">
                         <div class="form-group">
-                            <label for="budgetCategory">Categoria:</label>
+                            <label for="budgetCategory"><i class="fas fa-tag"></i> Categoria:</label>
                             <select id="budgetCategory" required>
                                 </select>
                         </div>
                         <div class="form-group">
-                            <label for="budgetAmountLimit">Limite de Gasto (R$):</label>
-                            <input type="number" id="budgetAmountLimit" step="0.01" required>
+                            <label for="budgetAmountLimit"><i class="fas fa-dollar-sign"></i> Limite de Gasto (R$):</label>
+                            <input type="number" id="budgetAmountLimit" step="0.01" required placeholder="0.00">
                         </div>
                         <div class="form-group">
-                            <label for="budgetMonth">Mês:</label>
+                            <label for="budgetMonth"><i class="fas fa-calendar-alt"></i> Mês:</label>
                             <select id="budgetMonth" required>
                                 </select>
                         </div>
                         <div class="form-group">
-                            <label for="budgetYear">Ano:</label>
-                            <input type="number" id="budgetYear" required min="2000" max="2100" value="2024">
+                            <label for="budgetYear"><i class="fas fa-calendar"></i> Ano:</label>
+                            <input type="number" id="budgetYear" required min="2000" max="2100" value="2025">
                         </div>
-                        <button type="submit" class="btn btn-success">Salvar Orçamento</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Salvar Orçamento</button>
                     </form>
                     <hr>
                     <h4>Orçamentos Definidos</h4>
@@ -169,7 +171,8 @@
             </div>
 
 
-            <div class="filter-sort">
+            <div class="filter-sort card-base">
+                <h3><i class="fas fa-filter"></i> Filtros e Ordenação</h3>
                 <input type="text" id="filterDescription" placeholder="Filtrar descrição...">
                 <select id="filterType">
                     <option value="">Todos os Tipos</option>
@@ -179,12 +182,12 @@
                 <select id="filterCategory">
                     <option value="">Todas as Categorias</option>
                     </select>
-                <label for="filterStartDate">De:</label>
+                <label for="filterStartDate"><i class="fas fa-calendar-alt"></i> De:</label>
                 <input type="date" id="filterStartDate">
-                <label for="filterEndDate">Até:</label>
+                <label for="filterEndDate"><i class="fas fa-calendar-alt"></i> Até:</label>
                 <input type="date" id="filterEndDate">
-                <button id="applyFiltersBtn" class="btn btn-primary btn-sm">Aplicar Filtros</button>
-                <button id="resetFiltersBtn" class="btn btn-secondary btn-sm">Limpar Filtros</button>
+                <button id="applyFiltersBtn" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Aplicar Filtros</button>
+                <button id="resetFiltersBtn" class="btn btn-secondary btn-sm"><i class="fas fa-redo"></i> Limpar Filtros</button>
                 <select id="sortType">
                     <option value="date-desc">Data (Mais Recente)</option>
                     <option value="date-asc">Data (Mais Antiga)</option>

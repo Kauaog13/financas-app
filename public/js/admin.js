@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function checkAdminAuth() {
         const token = localStorage.getItem('token');
         if (!token) {
-            window.location.href = 'login.html';
+            window.location.href = '/login'; // Corrigido: Redireciona para a rota /login
             return;
         }
         try {
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if (!response.ok) {
                 localStorage.removeItem('token');
-                window.location.href = 'login.html';
+                window.location.href = '/login'; // Corrigido: Redireciona para a rota /login
                 return;
             }
             const userData = await response.json();
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Erro ao verificar token de admin:', error);
             localStorage.removeItem('token');
-            window.location.href = 'login.html';
+            window.location.href = '/login'; // Corrigido: Redireciona para a rota /login
         }
     }
 
@@ -68,9 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span>${user.email} - Papel: ${user.role}</span>
                 </div>
                 <div class="user-actions">
-                    <button class="btn btn-primary btn-sm set-role-btn" data-id="${user.id}" data-role="user">Tornar Usuário</button>
-                    <button class="btn btn-info btn-sm set-role-btn" data-id="${user.id}" data-role="admin">Tornar Admin</button>
-                    <button class="btn btn-danger btn-sm delete-user-btn" data-id="${user.id}">Excluir</button>
+                    <button class="btn btn-primary btn-sm set-role-btn" data-id="${user.id}" data-role="user"><i class="fas fa-user"></i> Tornar Usuário</button>
+                    <button class="btn btn-info btn-sm set-role-btn" data-id="${user.id}" data-role="admin"><i class="fas fa-user-shield"></i> Tornar Admin</button>
+                    <button class="btn btn-danger btn-sm delete-user-btn" data-id="${user.id}"><i class="fas fa-trash-alt"></i> Excluir</button>
                 </div>
             `;
             userList.appendChild(li);
@@ -103,8 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ role })
+                    }
                 });
 
                 const data = await response.json();
@@ -147,15 +146,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Event Listeners
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('token');
-        window.location.href = 'login.html';
+        window.location.href = '/login'; // CORRIGIDO AQUI: Redireciona para a rota /login
     });
 
     backToAppBtn.addEventListener('click', () => {
         window.location.href = 'index.html';
     });
 
+    // Inicialização
     await checkAdminAuth();
     fetchUsers();
 });

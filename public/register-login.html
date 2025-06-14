@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autenticação - Controle de Finanças</title>
+    <link rel="stylesheet" href="css/login-register.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+<div class="main-container" id="mainContainer">
+    <div class="form-container sign-up-container">
+        <form id="registerForm">
+            <h1>Criar Conta</h1>
+            <span>Use seu e-mail para registro</span>
+            <input type="text" id="regUsername" placeholder="Nome de Usuário" required />
+            <input type="email" id="regEmail" placeholder="E-mail" required />
+            <input type="password" id="regPassword" placeholder="Senha" required />
+            <button type="submit">Registrar</button>
+            <p id="registerMessage" class="message"></p> </form>
+    </div>
+
+    <div class="form-container sign-in-container">
+        <form id="loginForm">
+            <h1>Entrar</h1>
+            <span>Use seu e-mail e senha</span>
+            <input type="email" id="loginEmail" placeholder="E-mail" required />
+            <input type="password" id="loginPassword" placeholder="Senha" required />
+            <a href="#">Esqueceu sua senha?</a>
+            <button type="submit">Login</button>
+            <p id="loginMessage" class="message"></p> </form>
+    </div>
+
+    <div class="overlay-container">
+        <div class="overlay">
+            <div class="overlay-panel overlay-left">
+                <h1>Bem-vindo de volta!</h1>
+                <p>Para se manter conectado, faça login com suas informações pessoais.</p>
+                <button class="ghost" id="signIn">Login</button>
+            </div>
+            <div class="overlay-panel overlay-right">
+                <h1>Olá, Amigo!</h1>
+                <p>Insira seus dados pessoais e comece sua jornada conosco.</p>
+                <button class="ghost" id="signUp">Registrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/auth.js"></script>
+
+</body>
+</html>

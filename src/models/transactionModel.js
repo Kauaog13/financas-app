@@ -9,6 +9,7 @@ class TransactionModel {
         return result.insertId;
     }
 
+    // MODIFICADO: getTransactionsByUserId - Garantido que não há referências a 'accounts'
     static async getTransactionsByUserId(userId, filters = {}) {
         let query = `
             SELECT t.*, c.name AS category_name
@@ -18,6 +19,7 @@ class TransactionModel {
         `;
         const params = [userId];
 
+        // Adiciona filtros dinamicamente
         if (filters.description) {
             query += ` AND t.description LIKE ?`;
             params.push(`%${filters.description}%`);
@@ -45,6 +47,7 @@ class TransactionModel {
         return rows;
     }
 
+    // MODIFICADO: getTransactionById - Garantido que não há referências a 'accounts'
     static async getTransactionById(transactionId, userId) {
         const [rows] = await pool.execute(
             `SELECT t.*, c.name AS category_name
@@ -98,7 +101,6 @@ class TransactionModel {
         return rows;
     }
 
-    // NOVO MÉTODO: Para obter despesas por categoria para um período específico
     static async getExpensesByCategoryForPeriod(userId, month, year) {
         const [rows] = await pool.execute(
             `SELECT t.category_id, SUM(t.amount) AS total_amount
