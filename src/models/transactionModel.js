@@ -48,13 +48,27 @@ class TransactionModel {
         return result.affectedRows > 0;
     }
 
-    // NOVO MÉTODO: Para obter despesas agrupadas por categoria
+    // Método para obter despesas agrupadas por categoria (já existente)
     static async getExpensesByCategory(userId) {
         const [rows] = await pool.execute(
             `SELECT c.name AS category, SUM(t.amount) AS total_amount
              FROM transactions t
              JOIN categories c ON t.category_id = c.id
              WHERE t.user_id = ? AND t.type = 'expense'
+             GROUP BY c.name
+             ORDER BY total_amount DESC`,
+            [userId]
+        );
+        return rows;
+    }
+
+    // NOVO MÉTODO: Para obter receitas agrupadas por categoria
+    static async getIncomesByCategory(userId) {
+        const [rows] = await pool.execute(
+            `SELECT c.name AS category, SUM(t.amount) AS total_amount
+             FROM transactions t
+             JOIN categories c ON t.category_id = c.id
+             WHERE t.user_id = ? AND t.type = 'income'
              GROUP BY c.name
              ORDER BY total_amount DESC`,
             [userId]

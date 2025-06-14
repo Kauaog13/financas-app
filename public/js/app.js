@@ -24,9 +24,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentBalanceElement = document.getElementById('currentBalance');
     const filterDescriptionInput = document.getElementById('filterDescription');
     const sortTypeSelect = document.getElementById('sortType');
-    // NOVO: Elementos para o gráfico
+    // Elementos para os gráficos
     const expensePieChartCanvas = document.getElementById('expensePieChart');
     const noExpenseDataMessage = document.getElementById('noExpenseDataMessage');
+    const incomeBarChartCanvas = document.getElementById('incomeBarChart'); // NOVO: Canvas para o gráfico de barras de receita
+    const noIncomeDataMessage = document.getElementById('noIncomeDataMessage'); // NOVO: Mensagem para sem dados de receita
 
 
     const categoryIdInput = document.getElementById('categoryId');
@@ -35,7 +37,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let transactions = [];
     let categories = [];
-    let expensePieChartInstance = null; // Para armazenar a instância do gráfico e destruí-la quando necessário
+    let expensePieChartInstance = null;
+    let incomeBarChartInstance = null; // NOVO: Para armazenar a instância do gráfico de barras
 
     // --- Funções de Autenticação e Inicialização ---
     async function checkAuth() {
@@ -228,8 +231,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 transactions = await response.json();
                 renderTransactions();
                 updateOverview();
-                // NOVO: Chama a função para renderizar o gráfico após buscar transações
+                // Chama as funções para renderizar os gráficos após buscar transações
                 renderExpensePieChart();
+                renderIncomeBarChart(); // NOVO: Chama a função para renderizar o gráfico de barras de receita
             } else {
                 console.error('Falha ao buscar transações:', response.statusText);
             }
@@ -299,7 +303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentBalanceElement.textContent = `R$ ${currentBalance.toFixed(2).replace('.', ',')}`;
     }
 
-    // --- NOVO: Função para Renderizar o Gráfico de Despesas por Categoria ---
+    // --- Função para Renderizar o Gráfico de Despesas por Categoria (já existente) ---
     async function renderExpensePieChart() {
         const token = localStorage.getItem('token');
         try {
@@ -310,7 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (!response.ok) {
-                console.error('Falha ao buscar dados do relatório:', response.statusText);
+                console.error('Falha ao buscar dados do relatório de despesas:', response.statusText);
                 expensePieChartCanvas.style.display = 'none';
                 noExpenseDataMessage.style.display = 'block';
                 return;
@@ -319,7 +323,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const reportData = await response.json();
             console.log("DEBUG: Dados do relatório de despesas por categoria:", reportData);
 
-            // Destrói a instância anterior do gráfico se ela existir
             if (expensePieChartInstance) {
                 expensePieChartInstance.destroy();
             }
@@ -336,14 +339,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const labels = reportData.map(item => item.category);
             const data = reportData.map(item => parseFloat(item.total_amount));
 
-            // Gera cores aleatórias para as fatias do gráfico
             const backgroundColors = data.map(() => {
                 const r = Math.floor(Math.random() * 255);
                 const g = Math.floor(Math.random() * 255);
                 const b = Math.floor(Math.random() * 255);
                 return `rgba(${r}, ${g}, ${b}, 0.7)`;
             });
-            const borderColors = backgroundColors.map(color => color.replace('0.7', '1')); // Bordas mais escuras
+            const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
 
             const chartData = {
                 labels: labels,
@@ -357,7 +359,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const chartOptions = {
                 responsive: true,
-                maintainAspectRatio: false, // Permite que o gráfico se ajuste ao tamanho do container
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'top',
@@ -389,6 +391,104 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Erro ao renderizar gráfico de despesas:', error);
             expensePieChartCanvas.style.display = 'none';
             noExpenseDataMessage.style.display = 'block';
+        }
+    }
+
+    // --- NOVO: Função para Renderizar o Gráfico de Barras de Receitas ---
+    async function renderIncomeBarChart() {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/reports/incomes-by-category', { // NOVO ENDPOINT
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Falha ao buscar dados do relatório de receitas:', response.statusText);
+                incomeBarChartCanvas.style.display = 'none';
+                noIncomeDataMessage.style.display = 'block';
+                return;
+            }
+
+            const reportData = await response.json();
+            console.log("DEBUG: Dados do relatório de receitas por categoria:", reportData);
+
+            if (incomeBarChartInstance) {
+                incomeBarChartInstance.destroy();
+            }
+
+            if (reportData.length === 0) {
+                incomeBarChartCanvas.style.display = 'none';
+                noIncomeDataMessage.style.display = 'block';
+                return;
+            } else {
+                incomeBarChartCanvas.style.display = 'block';
+                noIncomeDataMessage.style.display = 'none';
+            }
+
+            const labels = reportData.map(item => item.category);
+            const data = reportData.map(item => parseFloat(item.total_amount));
+
+            // Gera uma cor fixa ou gradiente para as barras de receita
+            const backgroundColor = 'rgba(75, 192, 192, 0.7)'; // Um tom de verde-água/azul
+            const borderColor = 'rgba(75, 192, 192, 1)';
+
+            const chartData = {
+                labels: labels,
+                datasets: [{
+                    label: 'Receita Total',
+                    data: data,
+                    backgroundColor: backgroundColor,
+                    borderColor: borderColor,
+                    borderWidth: 1
+                }]
+            };
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false, // Não precisa de legenda se há apenas um dataset
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += 'R$ ' + context.parsed.y.toFixed(2).replace('.', ',');
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toFixed(2).replace('.', ',');
+                            }
+                        }
+                    }
+                }
+            };
+
+            incomeBarChartInstance = new Chart(incomeBarChartCanvas, {
+                type: 'bar', // Tipo de gráfico de barras
+                data: chartData,
+                options: chartOptions,
+            });
+
+        } catch (error) {
+            console.error('Erro ao renderizar gráfico de receitas:', error);
+            incomeBarChartCanvas.style.display = 'none';
+            noIncomeDataMessage.style.display = 'block';
         }
     }
 
@@ -429,7 +529,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert('Transação salva com sucesso!');
                 transactionFormModal.style.display = 'none';
                 transactionForm.reset();
-                fetchTransactions(); // Re-fetch para atualizar a lista e o gráfico
+                fetchTransactions(); // Re-fetch para atualizar a lista e os gráficos
             } else {
                 const errorData = await response.json();
                 alert(`Erro ao salvar transação: ${errorData.message || response.statusText}`);
@@ -482,7 +582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (response.ok) {
                     alert('Transação excluída com sucesso!');
-                    fetchTransactions(); // Re-fetch para atualizar a lista e o gráfico
+                    fetchTransactions(); // Re-fetch para atualizar a lista e os gráficos
                 } else {
                     const errorData = await response.json();
                     alert(`Erro ao excluir transação: ${errorData.message || response.statusText}`);
@@ -560,7 +660,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const csvText = await response.text();
 
-            // Se o backend retornou JSON com mensagem (sem transações), não tentar baixar
             if (csvText.startsWith('{') && csvText.includes('message')) {
                 const data = JSON.parse(csvText);
                 alert(data.message);
@@ -608,5 +707,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Inicialização ---
     await checkAuth();
     await fetchCategories();
-    fetchTransactions(); // Garante que as transações são carregadas ao iniciar e o gráfico é renderizado
+    fetchTransactions();
 });
