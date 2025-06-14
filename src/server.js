@@ -5,7 +5,8 @@ const financeRoutes = require('./routes/financeRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const exportRoutes = require('./routes/exportRoutes');
-const reportRoutes = require('./routes/reportRoutes'); // NOVO: Importar rotas de relatório
+const reportRoutes = require('./routes/reportRoutes');
+const budgetRoutes = require('./routes/budgetRoutes'); // NOVO: Importar rotas de orçamento
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,7 +21,8 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/export', exportRoutes);
-app.use('/api/reports', reportRoutes); // NOVO: Usar as novas rotas de relatório
+app.use('/api/reports', reportRoutes);
+app.use('/api/budgets', budgetRoutes); // NOVO: Usar as novas rotas de orçamento
 
 // Rotas para servir as páginas HTML
 app.get('/', (req, res) => {

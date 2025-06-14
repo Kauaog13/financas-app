@@ -6,12 +6,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addTransactionBtn = document.getElementById('addTransactionBtn');
     const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
     const exportTransactionsBtn = document.getElementById('exportTransactionsBtn');
+    // NOVO: Elementos para Orçamentos
+    const manageBudgetsBtn = document.getElementById('manageBudgetsBtn');
+    const budgetOverviewList = document.getElementById('budgetOverviewList');
+    const noBudgetsMessage = document.getElementById('noBudgetsMessage');
+
     const transactionFormModal = document.getElementById('transactionFormModal');
     const categoryManagementModal = document.getElementById('categoryManagementModal');
+    const budgetManagementModal = document.getElementById('budgetManagementModal'); // NOVO: Modal de Orçamento
+
     const closeTransactionModalBtn = document.querySelector('#transactionFormModal .close-button');
     const closeCategoryModalBtn = document.querySelector('#categoryManagementModal .close-button');
+    const closeBudgetModalBtn = document.querySelector('#budgetManagementModal .close-button'); // NOVO: Close button de Orçamento
+
     const transactionForm = document.getElementById('transactionForm');
     const categoryForm = document.getElementById('categoryForm');
+    const budgetForm = document.getElementById('budgetForm'); // NOVO: Formulário de Orçamento
+
     const categoryListElement = document.getElementById('categoryList');
     const transactionIdInput = document.getElementById('transactionId');
     const descriptionInput = document.getElementById('description');
@@ -44,8 +55,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const categoryNameInput = document.getElementById('categoryName');
     const categoryTypeInput = document.getElementById('categoryType');
 
+    // NOVO: Elementos do formulário de orçamento
+    const budgetIdInput = document.getElementById('budgetId');
+    const budgetCategorySelect = document.getElementById('budgetCategory');
+    const budgetAmountLimitInput = document.getElementById('budgetAmountLimit');
+    const budgetMonthSelect = document.getElementById('budgetMonth');
+    const budgetYearInput = document.getElementById('budgetYear');
+    const budgetListElement = document.getElementById('budgetList');
+
+
     let transactions = [];
     let categories = [];
+    let budgets = []; // NOVO: Armazenará os orçamentos
     let expensePieChartInstance = null;
     let incomeBarChartInstance = null;
 
@@ -103,6 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 categories = await response.json();
                 populateCategorySelect();
                 populateFilterCategorySelect();
+                populateBudgetCategorySelect(); // NOVO: Popular categorias no formulário de orçamento
                 renderCategoryList();
             } else {
                 console.error('Falha ao buscar categorias:', response.statusText);
@@ -129,6 +151,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             option.value = category.id;
             option.textContent = `${category.name} (${category.type === 'income' ? 'Receita' : 'Despesa'})`;
             filterCategorySelect.appendChild(option);
+        });
+    }
+
+    // NOVO: Função para popular o select de categoria no formulário de orçamento (apenas despesas)
+    function populateBudgetCategorySelect() {
+        budgetCategorySelect.innerHTML = '<option value="">Selecione uma Categoria de Despesa</option>';
+        const expenseCategories = categories.filter(cat => cat.type === 'expense');
+        expenseCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            budgetCategorySelect.appendChild(option);
         });
     }
 
@@ -238,11 +272,213 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // --- Funções de Orçamentos ---
+    // Preenche o select de meses no formulário de orçamento
+    function populateBudgetMonths() {
+        budgetMonthSelect.innerHTML = '';
+        const monthNames = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+        monthNames.forEach((name, index) => {
+            const option = document.createElement('option');
+            option.value = index + 1; // Mês 1-12
+            option.textContent = name;
+            budgetMonthSelect.appendChild(option);
+        });
+        // Seleciona o mês atual por padrão
+        budgetMonthSelect.value = new Date().getMonth() + 1;
+        budgetYearInput.value = new Date().getFullYear();
+    }
+
+    async function fetchBudgets() {
+        const token = localStorage.getItem('token');
+        // Filtra por mês e ano atuais para exibição na tela principal
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        const url = `/api/budgets?month=${currentMonth}&year=${currentYear}`;
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                budgets = await response.json();
+                renderBudgetOverview();
+                renderBudgetList(); // Para o modal de gerenciamento
+            } else {
+                console.error('Falha ao buscar orçamentos:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar orçamentos:', error);
+        }
+    }
+
+    function renderBudgetOverview() {
+        budgetOverviewList.innerHTML = '';
+        if (budgets.length === 0) {
+            noBudgetsMessage.style.display = 'block';
+            budgetOverviewList.style.display = 'none';
+            return;
+        }
+        noBudgetsMessage.style.display = 'none';
+        budgetOverviewList.style.display = 'grid'; // Grid display for current budgets
+
+        budgets.forEach(budget => {
+            const expensePercentage = (budget.current_expense / budget.amount_limit) * 100;
+            let progressBarClass = '';
+            if (expensePercentage >= 100) {
+                progressBarClass = 'danger';
+            } else if (expensePercentage >= 80) {
+                progressBarClass = 'warning';
+            }
+
+            const li = document.createElement('div'); // Usamos div para o item de orçamento para melhor layout
+            li.classList.add('budget-item');
+            li.innerHTML = `
+                <div class="budget-item-info">
+                    <span class="category-name-display">${budget.category_name}</span>
+                    <span class="budget-period">${budget.month}/${budget.year}</span>
+                </div>
+                <div class="budget-values">
+                    <span>Gasto: R$ ${budget.current_expense.toFixed(2).replace('.', ',')}</span> /
+                    <span>Limite: R$ ${budget.amount_limit.toFixed(2).replace('.', ',')}</span>
+                </div>
+                <div class="budget-progress-bar-container">
+                    <div class="budget-progress-bar-fill ${progressBarClass}" style="width: ${Math.min(expensePercentage, 100)}%;"></div>
+                </div>
+            `;
+            budgetOverviewList.appendChild(li);
+        });
+    }
+
+    function renderBudgetList() {
+        budgetListElement.innerHTML = ''; // Limpa a lista no modal
+        if (budgets.length === 0) {
+            budgetListElement.innerHTML = '<p style="text-align: center;">Nenhum orçamento definido.</p>';
+            return;
+        }
+
+        budgets.forEach(budget => {
+            const li = document.createElement('li');
+            li.classList.add('budget-item-modal'); // Nova classe para itens do modal
+            li.innerHTML = `
+                <div class="budget-item-info">
+                    <span class="category-name-display">${budget.category_name}</span>
+                    <span class="budget-period">${budget.month}/${budget.year}</span>
+                </div>
+                <div class="budget-values">
+                    <span>Limite: R$ ${budget.amount_limit.toFixed(2).replace('.', ',')}</span>
+                </div>
+                <div class="budget-actions">
+                    <button class="btn btn-primary btn-sm edit-budget-btn" data-id="${budget.id}">Editar</button>
+                    <button class="btn btn-danger btn-sm delete-budget-btn" data-id="${budget.id}">Excluir</button>
+                </div>
+            `;
+            budgetListElement.appendChild(li);
+        });
+        addEventListenersToBudgetButtons();
+    }
+
+    function addEventListenersToBudgetButtons() {
+        document.querySelectorAll('.edit-budget-btn').forEach(button => {
+            button.onclick = () => editBudget(parseInt(button.dataset.id));
+        });
+        document.querySelectorAll('.delete-budget-btn').forEach(button => {
+            button.onclick = () => deleteBudget(parseInt(button.dataset.id));
+        });
+    }
+
+    async function addEditBudget() {
+        const token = localStorage.getItem('token');
+        const budgetId = budgetIdInput.value;
+        const category_id = budgetCategorySelect.value;
+        const amount_limit = parseFloat(budgetAmountLimitInput.value);
+        const month = parseInt(budgetMonthSelect.value);
+        const year = parseInt(budgetYearInput.value);
+
+        if (!category_id || !amount_limit || !month || !year) {
+            alert('Por favor, preencha todos os campos do orçamento.');
+            return;
+        }
+
+        const budgetData = { category_id, amount_limit, month, year };
+        let url = '/api/budgets';
+        let method = 'POST';
+
+        if (budgetId) {
+            url = `/api/budgets/${budgetId}`;
+            method = 'PUT';
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(budgetData)
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                budgetForm.reset();
+                budgetIdInput.value = '';
+                fetchBudgets(); // Recarrega orçamentos
+            } else {
+                alert(`Erro: ${data.message || response.statusText}`);
+            }
+        } catch (error) {
+            console.error('Erro na requisição de orçamento:', error);
+            alert('Erro ao comunicar com o servidor.');
+        }
+    }
+
+    async function deleteBudget(id) {
+        const token = localStorage.getItem('token');
+        if (confirm('Tem certeza que deseja excluir este orçamento?')) {
+            try {
+                const response = await fetch(`/api/budgets/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert(data.message);
+                    fetchBudgets(); // Recarrega orçamentos
+                } else {
+                    alert(`Erro: ${data.message || response.statusText}`);
+                }
+            } catch (error) {
+                console.error('Erro ao excluir orçamento:', error);
+                alert('Erro ao comunicar com o servidor.');
+            }
+        }
+    }
+
+    function editBudget(id) {
+        const budget = budgets.find(b => b.id === id);
+        if (budget) {
+            budgetIdInput.value = budget.id;
+            budgetCategorySelect.value = budget.category_id;
+            budgetAmountLimitInput.value = budget.amount_limit;
+            budgetMonthSelect.value = budget.month;
+            budgetYearInput.value = budget.year;
+            budgetManagementModal.style.display = 'flex';
+        }
+    }
+
     // --- Funções de Transações (com integração de Filtros e Categorias) ---
     async function fetchTransactions() {
         const token = localStorage.getItem('token');
 
-        // Coleta os valores dos filtros
         const filters = {
             description: filterDescriptionInput.value,
             type: filterTypeSelect.value,
@@ -251,7 +487,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             endDate: filterEndDateInput.value
         };
 
-        // Constrói a URL com os parâmetros de query
         const queryParams = new URLSearchParams();
         for (const key in filters) {
             if (filters[key]) {
@@ -341,7 +576,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentBalanceElement.textContent = `R$ ${currentBalance.toFixed(2).replace('.', ',')}`;
     }
 
-    // --- Função para Renderizar o Gráfico de Despesas por Categoria (com porcentagem no tooltip) ---
+    // --- Função para Renderizar o Gráfico de Despesas por Categoria ---
     async function renderExpensePieChart() {
         const token = localStorage.getItem('token');
         try {
@@ -376,7 +611,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const labels = reportData.map(item => item.category);
             const data = reportData.map(item => parseFloat(item.total_amount));
-            const totalExpenses = data.reduce((sum, current) => sum + current, 0); // Soma total para porcentagem
+            const totalExpenses = data.reduce((sum, current) => sum + current, 0);
 
             const backgroundColors = data.map(() => {
                 const r = Math.floor(Math.random() * 255);
@@ -437,7 +672,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- Função para Renderizar o Gráfico de Barras de Receitas (com porcentagem no tooltip) ---
+    // --- Função para Renderizar o Gráfico de Barras de Receitas ---
     async function renderIncomeBarChart() {
         const token = localStorage.getItem('token');
         try {
@@ -472,7 +707,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const labels = reportData.map(item => item.category);
             const data = reportData.map(item => parseFloat(item.total_amount));
-            const totalIncomes = data.reduce((sum, current) => sum + current, 0); // NOVO: Soma total para porcentagem
+            const totalIncomes = data.reduce((sum, current) => sum + current, 0);
 
             const backgroundColor = 'rgba(75, 192, 192, 0.7)';
             const borderColor = 'rgba(75, 192, 192, 1)';
@@ -503,9 +738,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     label += ': ';
                                 }
                                 if (context.parsed.y !== null) {
-                                    // Adiciona o valor monetário
                                     label += 'R$ ' + context.parsed.y.toFixed(2).replace('.', ',');
-                                    // NOVO: Calcula e adiciona a porcentagem
                                     if (totalIncomes > 0) {
                                         const percentage = ((context.parsed.y / totalIncomes) * 100).toFixed(2);
                                         label += ` (${percentage}%)`;
@@ -579,6 +812,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 transactionFormModal.style.display = 'none';
                 transactionForm.reset();
                 fetchTransactions();
+                fetchBudgets(); // Atualiza orçamentos após nova transação
             } else {
                 const errorData = await response.json();
                 alert(`Erro ao salvar transação: ${errorData.message || response.statusText}`);
@@ -632,6 +866,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (response.ok) {
                     alert('Transação excluída com sucesso!');
                     fetchTransactions();
+                    fetchBudgets(); // Atualiza orçamentos após exclusão de transação
                 } else {
                     const errorData = await response.json();
                     alert(`Erro ao excluir transação: ${errorData.message || response.statusText}`);
@@ -674,6 +909,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     closeCategoryModalBtn.onclick = () => {
         categoryManagementModal.style.display = 'none';
     };
+
+    // NOVO: Listeners para Orçamentos
+    manageBudgetsBtn.onclick = async () => {
+        budgetForm.reset();
+        budgetIdInput.value = '';
+        populateBudgetMonths(); // Preenche meses e ano
+        await fetchCategories(); // Garante categorias para o select
+        await fetchBudgets(); // Busca todos os orçamentos para listar no modal
+        budgetManagementModal.style.display = 'flex';
+    };
+    closeBudgetModalBtn.onclick = () => {
+        budgetManagementModal.style.display = 'none';
+    };
+    budgetForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await addEditBudget();
+    });
 
     if (adminPanelBtn) {
         adminPanelBtn.addEventListener('click', () => {
@@ -742,6 +994,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (event.target == categoryManagementModal) {
             categoryManagementModal.style.display = 'none';
         }
+        if (event.target == budgetManagementModal) { // NOVO: Fechar modal de orçamento
+            budgetManagementModal.style.display = 'none';
+        }
     };
 
     // Event listeners para os filtros
@@ -752,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         filterCategorySelect.value = '';
         filterStartDateInput.value = '';
         filterEndDateInput.value = '';
-        fetchTransactions(); // Re-fetch para remover filtros
+        fetchTransactions();
     });
 
     filterDescriptionInput.addEventListener('input', () => { /* Não dispara fetch aqui, espera botão */ });
@@ -774,5 +1029,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Inicialização ---
     await checkAuth();
     await fetchCategories();
-    fetchTransactions();
+    fetchTransactions(); // Inicia o fetch que vai atualizar transações, visão geral e gráficos
+    fetchBudgets(); // NOVO: Busca e renderiza os orçamentos
 });

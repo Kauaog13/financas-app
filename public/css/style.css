@@ -7,7 +7,11 @@
     --text-dark: #333333;
     --card-background: #ffffff;
     --border-color: #cccccc;
-    --info-color: #17a2b8; /* Novo azul para gerenciar categorias */
+    --info-color: #17a2b8; /* Novo azul para gerenciar categorias e orçamentos */
+    --progress-bar-bg: #e0e0e0;
+    --progress-bar-fill-normal: #4CAF50; /* Verde para progresso normal */
+    --progress-bar-fill-warning: #FFC107; /* Amarelo para aviso */
+    --progress-bar-fill-danger: #DC3545; /* Vermelho para estourado */
 }
 
 body {
@@ -96,7 +100,7 @@ body {
     background-color: #d1401a;
 }
 
-.btn-info { /* Novo estilo de botão */
+.btn-info {
     background-color: var(--info-color);
     color: white;
 }
@@ -157,7 +161,7 @@ h2 {
 .balance-card p { color: var(--primary-color); }
 
 
-/* Formulário de Transação (Modal) */
+/* Formulários (Modal) */
 .modal {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
@@ -221,14 +225,18 @@ h2 {
     font-size: 1em;
 }
 
-/* Lista de Transações */
-.transaction-list {
+/* Listas de Itens (Transações, Categorias, Orçamentos) */
+.transaction-list,
+.category-list,
+.budget-list { /* Adicionado budget-list */
     list-style: none;
     padding: 0;
     margin-top: 20px;
 }
 
-.transaction-item {
+.transaction-item,
+.category-item,
+.budget-item { /* Adicionado budget-item */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -240,7 +248,9 @@ h2 {
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.transaction-item:last-child {
+.transaction-item:last-child,
+.category-item:last-child,
+.budget-item:last-child {
     border-bottom: none;
 }
 
@@ -279,52 +289,19 @@ h2 {
     white-space: nowrap;
 }
 
-.transaction-actions {
+.transaction-actions,
+.category-actions,
+.budget-actions { /* Adicionado budget-actions */
     display: flex;
     gap: 10px;
     margin-left: 20px;
 }
 
-.transaction-actions button {
+.transaction-actions button,
+.category-actions button,
+.budget-actions button { /* Adicionado budget-actions button */
     padding: 6px 12px;
     font-size: 0.85em;
-}
-
-/* Filtro e Ordenação */
-.filter-sort {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-
-.filter-sort input,
-.filter-sort select {
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 0.9em;
-    flex: 1;
-    min-width: 200px;
-}
-
-/* Estilos para o Modal de Gerenciamento de Categorias */
-.category-list {
-    list-style: none;
-    padding: 0;
-    margin-top: 15px;
-}
-
-.category-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    margin-bottom: 8px;
-    background-color: var(--background-light);
 }
 
 .category-item .category-name-display {
@@ -337,9 +314,136 @@ h2 {
     margin-left: 10px;
 }
 
-.category-item .category-actions button {
-    padding: 5px 10px;
-    font-size: 0.8em;
+
+/* Filtro e Ordenação */
+.filter-sort {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: flex-end; /* Alinha à direita */
+    align-items: flex-end; /* Alinha na base */
+}
+
+.filter-sort input[type="text"],
+.filter-sort input[type="date"],
+.filter-sort select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9em;
+    flex: 1; /* Permite que cresçam */
+    min-width: 150px; /* Garante tamanho mínimo */
+}
+
+.filter-sort label {
+    font-size: 0.9em;
+    color: #555;
+    white-space: nowrap; /* Evita quebra de linha */
+    margin-bottom: 5px; /* Espaço para inputs */
+}
+
+.filter-sort .btn {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    margin-right: 0; /* Remove margem extra para alinhar botões */
+    margin-bottom: 0; /* Remove margem extra */
+}
+/* Estilo específico para alinhar o filtro de descrição */
+.filter-sort input[type="text"] {
+    flex-basis: 100%; /* Ocupa toda a linha em telas pequenas */
+    margin-bottom: 10px;
+}
+/* Ajusta os botões de filtro para não terem margem à direita entre si */
+.filter-sort button + button {
+    margin-left: 10px;
+    margin-right: 0;
+}
+/* Alinha os labels com os inputs */
+.filter-sort .form-group-inline {
+    display: flex;
+    flex-direction: column;
+    margin-right: 15px;
+}
+.filter-sort .form-group-inline:last-child {
+    margin-right: 0;
+}
+
+
+/* Estilos para Gráficos */
+.chart-container {
+    position: relative; /* Para Chart.js responsive */
+    height: 400px; /* Altura fixa para o gráfico */
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* NOVO: Estilos para Orçamentos */
+.budget-overview-list {
+    margin-top: 20px;
+    display: grid; /* Usa grid para layout flexível */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Colunas responsivas */
+    gap: 15px;
+}
+
+.budget-item {
+    flex-direction: column; /* Itens do orçamento empilhados */
+    align-items: flex-start; /* Alinha o conteúdo à esquerda */
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--card-background);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.budget-item-info {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.budget-item-info .category-name-display {
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 1.1em;
+}
+
+.budget-item-info .budget-period {
+    font-size: 0.85em;
+    color: #666;
+}
+
+.budget-values {
+    width: 100%;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.budget-progress-bar-container {
+    width: 100%;
+    background-color: var(--progress-bar-bg);
+    border-radius: 5px;
+    height: 10px; /* Altura da barra */
+    overflow: hidden; /* Garante que a barra interna não exceda */
+    margin-top: 5px;
+}
+
+.budget-progress-bar-fill {
+    height: 100%;
+    width: 0%; /* Largura inicial, será setada por JS */
+    border-radius: 5px;
+    background-color: var(--progress-bar-fill-normal);
+    transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out;
+}
+
+/* Cores da barra de progresso baseadas no uso */
+.budget-progress-bar-fill.warning {
+    background-color: var(--progress-bar-fill-warning);
+}
+.budget-progress-bar-fill.danger {
+    background-color: var(--progress-bar-fill-danger);
 }
 
 /* Responsividade Básica */
@@ -354,7 +458,7 @@ h2 {
     .overview-cards {
         flex-direction: column;
     }
-    .transaction-item {
+    .transaction-item, .budget-item {
         flex-direction: column;
         align-items: flex-start;
     }
@@ -364,7 +468,7 @@ h2 {
         margin-left: 0;
         margin-top: 5px;
     }
-    .transaction-actions {
+    .transaction-actions, .budget-actions {
         margin-top: 10px;
         width: 100%;
         justify-content: flex-end;
@@ -373,12 +477,21 @@ h2 {
         flex-direction: column;
         align-items: stretch;
     }
-    .btn {
+    .filter-sort input,
+    .filter-sort select {
+        min-width: unset; /* Remove min-width em telas pequenas */
+    }
+    .filter-sort .btn {
+        width: 100%;
         margin-bottom: 10px;
         margin-right: 0;
     }
     .transactions-section .btn {
         width: 100%;
         box-sizing: border-box;
+    }
+    .filter-sort .form-group-inline {
+        margin-right: 0;
+        width: 100%;
     }
 }
