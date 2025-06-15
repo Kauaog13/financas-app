@@ -611,7 +611,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 let label = context.label || '';
                                 if (label) {
                                     label += ': ';
@@ -706,7 +706,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 let label = context.dataset.label || '';
                                 if (label) {
                                     label += ': ';
@@ -727,7 +727,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return 'R$ ' + value.toFixed(2).replace('.', ',');
                             },
                             color: textColor // Cor dos rótulos do eixo Y

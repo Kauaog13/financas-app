@@ -532,14 +532,7 @@ h2 i {
     display: flex;
     justify-content: flex-end;
     gap: 5px;
-}
-
-.transaction-actions .btn,
-.category-actions .btn,
-.budget-actions .btn {
-    padding: 0.4rem 0.7rem;
-    font-size: 0.8em;
-    margin-right: 0; /* Override default margin */
+    margin-left: 35px; /* Aumentado para 35px */
 }
 
 /* Specific styles for category and budget lists in modals */
@@ -554,10 +547,9 @@ h2 i {
     font-size: 0.9em;
 }
 .budget-item-modal .budget-period {
-    flex: 1;
-    text-align: center;
-    color: var(--secondary-text-light);
+    margin-left: 10px; /* Adicionado para espaçar da categoria */
     font-size: 0.9em;
+    color: var(--secondary-text-light);
 }
 .budget-item-modal .budget-values {
     flex: 1.5;
