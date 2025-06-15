@@ -12,9 +12,9 @@
     /* Cores Comuns (não mudam com o tema) */
     --primary-action-color: #007bff; /* Azul para botões principais */
     --primary-action-hover: #0056b3;
-    --success-color: #28a745; /* Verde para sucesso/receitas */
+    --success-color: #28a745; /* Verde para sucesso/receitas (usado no light mode) */
     --success-dark: #218838;
-    --danger-color: #dc3545; /* Vermelho para perigo/despesas */
+    --danger-color: #dc3545; /* Vermelho para perigo/despesas (usado no light mode) */
     --danger-dark: #c82333;
     --info-color: #17a2b8; /* Ciano para info/gerenciar */
     --info-dark: #138496;
@@ -23,12 +23,12 @@
 
     /* Cores de Progresso (Orçamentos) */
     --progress-bar-bg: #e9ecef;
-    --progress-fill-normal: #28a745; /* Verde */
-    --progress-fill-warning: #ffc107; /* Amarelo */
-    --progress-fill-danger: #dc3545; /* Vermelho */
+    --progress-fill-normal: #28a745;
+    --progress-fill-warning: #ffc107;
+    --progress-fill-danger: #dc3545;
 
     /* Sombras */
-    --box-shadow-light: 0 0.5rem 1rem rgba(0, 0, 0, 0.05); /* Sombra suave para cards */
+    --box-shadow-light: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
     --box-shadow-hover: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1);
 }
 
@@ -38,7 +38,7 @@ body {
     margin: 0;
     padding: 0;
     background-color: var(--background-color-light);
-    color: var(--text-color-light);
+    color: var(--text-color-light); /* Cor do texto padrão para o corpo */
     line-height: 1.6;
     transition: background-color 0.3s ease, color 0.3s ease;
     -webkit-font-smoothing: antialiased;
@@ -47,24 +47,53 @@ body {
 
 /* --- Modo Escuro Ativado --- */
 body.dark-mode {
-    --background-color-dark: #212529; /* Fundo geral escuro */
-    --card-background-dark: #343a40; /* Fundo de seções/cards escuro */
-    --text-color-dark: #f8f9fa; /* Texto principal claro */
-    --secondary-text-dark: #adb5bd; /* Texto secundário claro */
-    --border-color-dark: #495057; /* Bordas e divisores escuros */
-    --header-bg-dark: #495057; /* Cor do cabeçalho no modo escuro */
-    --header-text-dark: #f8f9fa; /* Cor do texto do cabeçalho no modo escuro */
-    --box-shadow-dark: 0 0.5rem 1rem rgba(0, 0, 0, 0.25); /* Sombra mais escura */
+    --background-color-dark: #212529;
+    --card-background-dark: #343a40;
+    --text-color-dark: #f8f9fa; /* BRANCO */
+    --secondary-text-dark: #adb5bd; /* Cinza claro */
+    --border-color-dark: #495057;
+    --header-bg-dark: #495057;
+    --header-text-dark: #f8f9fa;
+    --box-shadow-dark: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+
+    /* Novas variáveis de cores para o resumo no dark mode, se necessário */
+    --income-text-dark: #4CAF50; /* Um verde claro e vibrante para receita */
+    --expense-text-dark: #F44336; /* Um vermelho claro e vibrante para despesa */
+    --balance-text-dark: #f8f9fa; /* Branco para saldo geral */
+
 
     background-color: var(--background-color-dark);
-    color: var(--text-color-dark);
+    color: var(--text-color-dark); /* Aplica a cor branca definida */
 }
 
+/* Garante que os títulos e parágrafos usem as cores do modo escuro */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode p,
+body.dark-mode li,
+body.dark-mode label,
+body.dark-mode strong,
+body.dark-mode span {
+    color: var(--text-color-dark) !important; /* Usando !important para forçar a cor */
+}
+
+/* Exceção para textos secundários específicos que podem usar outra cor */
+body.dark-mode .secondary-text-light,
+body.dark-mode .overview-cards .card h3 i,
+body.dark-mode .filter-sort h3 i,
+body.dark-mode h2 i,
+body.dark-mode .form-group label i {
+    color: var(--primary-action-color) !important; /* Mantém os ícones em azul primário, forçando */
+}
+
+/* Garante que a cor do texto principal do cabeçalho seja branca */
 body.dark-mode .header {
     background-color: var(--header-bg-dark);
     color: var(--header-text-dark);
 }
 
+/* Seções e cards no modo escuro */
 body.dark-mode section.card-base {
     background-color: var(--card-background-dark);
     box-shadow: var(--box-shadow-dark);
@@ -77,11 +106,7 @@ body.dark-mode .overview-cards .card {
     border-color: var(--border-color-dark);
 }
 
-body.dark-mode h2,
-body.dark-mode .header h1 {
-    color: var(--text-color-dark);
-}
-
+/* Campos de formulário no modo escuro */
 body.dark-mode .form-group input,
 body.dark-mode .form-group select {
     background-color: var(--card-background-dark);
@@ -89,18 +114,54 @@ body.dark-mode .form-group select {
     border-color: var(--border-color-dark);
 }
 
+/* Itens de listas (transações, categorias, orçamentos, usuários) no modo escuro */
 body.dark-mode .transaction-item,
 body.dark-mode .category-item,
 body.dark-mode .budget-item,
-body.dark-mode .budget-item-modal {
+body.dark-mode .budget-item-modal,
+body.dark-mode .user-item {
     background-color: var(--card-background-dark);
     border-color: var(--border-color-dark);
 }
 
+/* Mensagens informativas no modo escuro */
 body.dark-mode .message-info {
     color: var(--secondary-text-dark);
 }
 
+/* --- CORREÇÕES ESPECÍFICAS PARA A ÁREA DE FILTRAGEM --- */
+body.dark-mode .filter-sort {
+    background-color: var(--card-background-dark); /* Fundo escuro para a área de filtro */
+    border-color: var(--border-color-dark); /* Borda escura */
+}
+
+body.dark-mode .filter-sort input[type="text"],
+body.dark-mode .filter-sort select,
+body.dark-mode .filter-sort input[type="date"] {
+    background-color: var(--background-color-dark); /* Fundo dos inputs de filtro mais escuro */
+    color: var(--text-color-dark); /* Texto dos inputs de filtro branco */
+    border-color: var(--border-color-dark); /* Borda dos inputs de filtro escura */
+}
+
+body.dark-mode .filter-sort label {
+    color: var(--text-color-dark); /* Rótulos de filtro brancos */
+}
+
+/* --- AJUSTES ESPECÍFICOS PARA OS NÚMEROS DO PAINEL "RESUMO DE FINANÇAS" NO DARK MODE --- */
+/* Removido o !important geral para .overview-cards .card p para permitir as cores específicas */
+body.dark-mode .overview-cards .card p {
+    /* Deixamos a regra mais específica abaixo decidir a cor */
+}
+
+body.dark-mode .income-card p {
+    color: var(--income-text-dark) !important; /* Verde para Receitas no dark mode */
+}
+body.dark-mode .expense-card p {
+    color: var(--expense-text-dark) !important; /* Vermelho para Despesas no dark mode */
+}
+body.dark-mode .balance-card p {
+    color: var(--balance-text-dark) !important; /* Branco para Saldo Geral no dark mode */
+}
 
 /* --- Layout Base --- */
 .container {

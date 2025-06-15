@@ -34,7 +34,7 @@ body.dark-mode {
     --background-color-page: #212529;
     --card-background-color: #343a40;
     --text-color-primary: #f8f9fa;
-    --text-color-secondary: #adb5bd;
+    --text-color-secondary: #adb5bd; /* Cor cinza clara para texto secundário no dark mode */
     --input-bg-color: #495057;
     --input-border-color: #6c757d;
 
@@ -44,9 +44,9 @@ body.dark-mode {
     --button-gradient-start: #17a2b8;
     --button-gradient-end: #138496;
 
-    --overlay-bg-start: #17a2b8;
-    --overlay-bg-end: #138496;
-    --overlay-text-color: #f8f9fa;
+    --overlay-bg-start: #17a2b8; /* Cor de sobreposição */
+    --overlay-bg-end: #138496; /* Cor de sobreposição */
+    --overlay-text-color: #f8f9fa; /* Cor do texto de sobreposição */
 
     --box-shadow-main: 0 14px 28px rgba(0,0,0,0.4), 0 10px 10px rgba(0,0,0,0.3); /* Sombra mais escura */
 }
@@ -64,16 +64,16 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    font-family: 'Montserrat', sans-serif; /* Usando Montserrat como no exemplo */
+    font-family: 'Montserrat', sans-serif;
     height: 100vh;
-    overflow: hidden; /* Evita scroll na transição */
+    overflow: hidden;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1 {
     font-weight: bold;
     margin: 0;
-    color: var(--text-color-primary); /* Adapta cor ao tema */
+    color: var(--text-color-primary);
 }
 
 p {
@@ -82,7 +82,7 @@ p {
     line-height: 20px;
     letter-spacing: 0.5px;
     margin: 20px 0 30px;
-    color: var(--text-color-primary); /* Adapta cor ao tema */
+    color: var(--text-color-primary);
 }
 
 span {
@@ -91,15 +91,25 @@ span {
 }
 
 a {
-    color: var(--primary-action-color); /* Link colorido */
+    color: var(--primary-action-color); /* Link colorido no modo claro */
     font-size: 14px;
     text-decoration: none;
     margin: 15px 0;
-    transition: color 0.3s ease; /* Transição para hover */
+    transition: color 0.3s ease;
 }
 a:hover {
     color: var(--button-hover-color);
 }
+
+/* --- CORREÇÃO: PARA O LINK "ESQUECEU SUA SENHA?" NO DARK MODE --- */
+body.dark-mode a {
+    color: var(--text-color-secondary); /* Usa a cor cinza secundária do dark mode */
+}
+body.dark-mode a:hover {
+    color: var(--text-color-primary); /* Torna-o um pouco mais claro no hover, se desejar */
+}
+/* FIM DA CORREÇÃO */
+
 
 button {
     border-radius: 20px;
@@ -113,7 +123,7 @@ button {
     text-transform: uppercase;
     transition: transform 80ms ease-in, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra para botões */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 button:active {
@@ -126,16 +136,16 @@ button:focus {
 
 button.ghost {
     background-color: transparent;
-    border-color: var(--overlay-text-color); /* Borda da cor do texto do overlay */
-    box-shadow: none; /* Sem sombra para botões ghost */
+    border-color: var(--overlay-text-color);
+    box-shadow: none;
 }
 button.ghost:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* Um leve fundo ao passar o mouse */
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 
 form {
-    background-color: var(--card-background-color); /* Fundo do formulário */
+    background-color: var(--card-background-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -143,21 +153,21 @@ form {
     padding: 0 50px;
     height: 100%;
     text-align: center;
-    transition: background-color 0.3s ease; /* Transição de tema */
+    transition: background-color 0.3s ease;
 }
 
 input {
-    background-color: var(--input-bg-color); /* Fundo do input */
+    background-color: var(--input-bg-color);
     border: none;
     padding: 12px 15px;
     margin: 8px 0;
     width: 100%;
-    border-radius: 8px; /* Cantos arredondados */
-    color: var(--text-color-primary); /* Cor do texto no input */
+    border-radius: 8px;
+    color: var(--text-color-primary);
     transition: background-color 0.3s ease, color 0.3s ease, border 0.3s ease;
 }
 input:focus {
-    border: 1px solid var(--primary-action-color); /* Borda no foco */
+    border: 1px solid var(--primary-action-color);
     outline: none;
 }
 
@@ -211,7 +221,7 @@ input:focus {
         opacity: 0;
         z-index: 1;
     }
-    
+
     50%, 100% {
         opacity: 1;
         z-index: 5;
@@ -235,7 +245,7 @@ input:focus {
 
 .overlay {
     background: var(--overlay-bg-start);
-    background: linear-gradient(to right, var(--button-gradient-start), var(--button-gradient-end)); /* Usa as cores do botão para o gradiente */
+    background: linear-gradient(to right, var(--button-gradient-start), var(--button-gradient-end));
     background-repeat: no-repeat;
     background-size: cover;
     background-position: 0 0;
@@ -290,9 +300,9 @@ input:focus {
     padding: 10px;
     border-radius: 8px;
     font-weight: 500;
-    opacity: 0; /* Começa invisível para transição */
+    opacity: 0;
     transition: opacity 0.3s ease, transform 0.3s ease;
-    transform: translateY(10px); /* Para efeito de entrada */
+    transform: translateY(10px);
 }
 
 .message.show {
@@ -314,13 +324,13 @@ input:focus {
 
 /* --- Ícones --- */
 i {
-    margin-right: 5px; /* Espaço para ícones */
+    margin-right: 5px;
 }
 form h1 i {
-    font-size: 1.5rem; /* Tamanho do ícone no título */
+    font-size: 1.5rem;
 }
 label i {
-    font-size: 0.9rem; /* Tamanho do ícone no label */
+    font-size: 0.9rem;
 }
 button i {
     font-size: 1rem;
@@ -329,61 +339,61 @@ button i {
 /* --- Responsividade --- */
 @media (max-width: 768px) {
     body {
-        height: auto; /* Permite que o body se ajuste ao conteúdo */
-        padding: 20px 0; /* Adiciona padding vertical */
+        height: auto;
+        padding: 20px 0;
     }
     .main-container {
         flex-direction: column;
-        width: 95%; /* Ocupa mais largura em telas pequenas */
-        min-height: 600px; /* Altura mínima ajustada */
+        width: 95%;
+        min-height: 600px;
         max-width: 95%;
     }
 
     .form-container {
-        width: 100%; /* Formulários ocupam toda a largura */
-        position: relative; /* Ajusta posicionamento */
+        width: 100%;
+        position: relative;
         height: auto;
-        min-height: 400px; /* Garante altura mínima para formulários */
+        min-height: 400px;
     }
     .form-container form {
-        padding: 20px 30px; /* Padding ajustado */
+        padding: 20px 30px;
     }
 
     .sign-in-container, .sign-up-container {
         left: 0;
         top: 0;
-        opacity: 1; /* Ambos visíveis inicialmente para evitar piscar */
+        opacity: 1;
         z-index: 1;
-        transform: none !important; /* Remove transform para evitar conflitos */
+        transform: none !important;
         height: auto;
     }
 
     .overlay-container {
-        position: relative; /* Posicionamento relativo */
+        position: relative;
         left: 0;
         width: 100%;
         height: auto;
-        min-height: 150px; /* Altura mínima para o overlay */
-        order: -1; /* Coloca o overlay acima dos formulários */
-        transition: none; /* Remove transições para mobile */
-        transform: none !important; /* Remove transform */
+        min-height: 150px;
+        order: -1;
+        transition: none;
+        transform: none !important;
     }
     .overlay {
         width: 100%;
         left: 0;
         transform: none !important;
-        flex-direction: row; /* Layout em linha para painéis */
+        flex-direction: row;
         padding: 15px;
     }
     .overlay-panel {
-        width: 100%; /* Cada painel ocupa a largura total */
+        width: 100%;
         padding: 10px;
         transform: none !important;
         position: relative;
     }
 
     .main-container.right-panel-active .form-container {
-        transform: none; /* Reseta transform em mobile ativo */
+        transform: none;
         animation: none;
     }
     .main-container.right-panel-active .overlay-container {
@@ -395,7 +405,7 @@ button i {
         margin-bottom: 10px;
     }
     .overlay p {
-        display: none; /* Oculta o parágrafo longo em mobile */
+        display: none;
     }
     .overlay button.ghost {
         padding: 8px 20px;
@@ -407,9 +417,9 @@ button i {
         display: none;
     }
     .main-container:not(.right-panel-active) .overlay-left {
-        display: flex; /* Mostra apenas o painel esquerdo se não for right-panel-active */
+        display: flex;
     }
     .main-container.right-panel-active .overlay-right {
-        display: flex; /* Mostra apenas o painel direito se for right-panel-active */
+        display: flex;
     }
 }
