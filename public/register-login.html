@@ -6,8 +6,7 @@
     <title>Autenticação - Controle de Finanças</title>
     <link rel="stylesheet" href="css/login-register.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="icon" type="image/gif" href="\favicon-financas-app.ico">
-</head>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"> </head>
 <body>
 
 <div class="main-container" id="mainContainer">
@@ -46,6 +45,43 @@
                 <button class="ghost" id="signUp">Registrar</button>
             </div>
         </div>
+    </div>
+</div>
+
+<div id="forgotPasswordModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button-forgot-password"><i class="fas fa-times"></i></span>
+        <h3><i class="fas fa-lock-open"></i> Recuperar Senha</h3>
+        <p>Informe seu e-mail para receber um link de redefinição de senha.</p>
+        <form id="forgotPasswordForm">
+            <div class="form-group">
+                <label for="forgotEmail"><i class="fas fa-envelope"></i> E-mail:</label>
+                <input type="email" id="forgotEmail" placeholder="seu-email@exemplo.com" required>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Enviar Link de Redefinição</button>
+            <p id="forgotPasswordMessage" class="message"></p>
+        </form>
+    </div>
+</div>
+
+<div id="resetPasswordModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button-reset-password"><i class="fas fa-times"></i></span>
+        <h3><i class="fas fa-key"></i> Redefinir Senha</h3>
+        <p>Digite sua nova senha.</p>
+        <form id="resetPasswordForm">
+            <input type="hidden" id="resetToken">
+            <div class="form-group">
+                <label for="newPassword"><i class="fas fa-unlock-alt"></i> Nova Senha:</label>
+                <input type="password" id="newPassword" placeholder="Sua nova senha" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmNewPassword"><i class="fas fa-check-double"></i> Confirmar Senha:</label>
+                <input type="password" id="confirmNewPassword" placeholder="Confirme sua nova senha" required>
+            </div>
+            <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Redefinir Senha</button>
+            <p id="resetPasswordMessage" class="message"></p>
+        </form>
     </div>
 </div>
 

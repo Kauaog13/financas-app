@@ -56,7 +56,7 @@ body.dark-mode {
     --header-text-dark: #f8f9fa;
     --box-shadow-dark: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
 
-    /* Novas variáveis de cores para o resumo no dark mode, se necessário */
+    /* Novas variáveis de cores para o resumo no dark mode */
     --income-text-dark: #4CAF50; /* Um verde claro e vibrante para receita */
     --expense-text-dark: #F44336; /* Um vermelho claro e vibrante para despesa */
     --balance-text-dark: #f8f9fa; /* Branco para saldo geral */
@@ -148,7 +148,6 @@ body.dark-mode .filter-sort label {
 }
 
 /* --- AJUSTES ESPECÍFICOS PARA OS NÚMEROS DO PAINEL "RESUMO DE FINANÇAS" NO DARK MODE --- */
-/* Removido o !important geral para .overview-cards .card p para permitir as cores específicas */
 body.dark-mode .overview-cards .card p {
     /* Deixamos a regra mais específica abaixo decidir a cor */
 }

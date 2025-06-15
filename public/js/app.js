@@ -586,6 +586,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
 
+            // Determinar a cor do texto com base no modo escuro
+            const textColor = document.body.classList.contains('dark-mode') ? '#f8f9fa' : '#343a40';
+
             const chartData = {
                 labels: labels,
                 datasets: [{
@@ -602,6 +605,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 plugins: {
                     legend: {
                         position: 'top',
+                        labels: {
+                            color: textColor // Cor do texto da legenda
+                        }
                     },
                     tooltip: {
                         callbacks: {
@@ -676,6 +682,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const backgroundColor = 'rgba(75, 192, 192, 0.7)';
             const borderColor = 'rgba(75, 192, 192, 1)';
 
+            // Determinar a cor do texto com base no modo escuro
+            const textColor = document.body.classList.contains('dark-mode') ? '#f8f9fa' : '#343a40';
+
+
             const chartData = {
                 labels: labels,
                 datasets: [{
@@ -719,7 +729,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ticks: {
                             callback: function(value) {
                                 return 'R$ ' + value.toFixed(2).replace('.', ',');
-                            }
+                            },
+                            color: textColor // Cor dos rótulos do eixo Y
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)' // Cor da grade no eixo Y no dark mode
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: textColor // Cor dos rótulos do eixo X
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)' // Cor da grade no eixo X no dark mode
                         }
                     }
                 }
@@ -738,7 +760,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- ADDED: fetch functions (moved from later in the file) ---
+    // Event listeners for transaction and category buttons (delegation)
+    function addEventListenersToTransactionButtons() {
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.onclick = (e) => editTransaction(parseInt(e.currentTarget.dataset.id));
+        });
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.onclick = (e) => deleteTransaction(parseInt(e.currentTarget.dataset.id));
+        });
+    }
+
+    function addEventListenersToCategoryButtons() {
+        document.querySelectorAll('.edit-category-btn').forEach(button => {
+            button.onclick = (e) => editCategory(parseInt(e.currentTarget.dataset.id));
+        });
+        document.querySelectorAll('.delete-category-btn').forEach(button => {
+            button.onclick = (e) => deleteCategory(parseInt(e.currentTarget.dataset.id));
+        });
+    }
+
+    function addEventListenersToBudgetButtons() {
+        document.querySelectorAll('.edit-budget-btn').forEach(button => {
+            button.onclick = (e) => editBudget(parseInt(e.currentTarget.dataset.id));
+        });
+        document.querySelectorAll('.delete-budget-btn').forEach(button => {
+            button.onclick = (e) => deleteBudget(parseInt(e.currentTarget.dataset.id));
+        });
+    }
+
     async function fetchTransactions() {
         const token = localStorage.getItem('token');
         const queryParams = new URLSearchParams();
@@ -849,34 +898,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Event listeners for transaction and category buttons (delegation)
-    function addEventListenersToTransactionButtons() {
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.onclick = (e) => editTransaction(parseInt(e.currentTarget.dataset.id));
-        });
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.onclick = (e) => deleteTransaction(parseInt(e.currentTarget.dataset.id));
-        });
-    }
-
-    function addEventListenersToCategoryButtons() {
-        document.querySelectorAll('.edit-category-btn').forEach(button => {
-            button.onclick = (e) => editCategory(parseInt(e.currentTarget.dataset.id));
-        });
-        document.querySelectorAll('.delete-category-btn').forEach(button => {
-            button.onclick = (e) => deleteCategory(parseInt(e.currentTarget.dataset.id));
-        });
-    }
-
-    function addEventListenersToBudgetButtons() {
-        document.querySelectorAll('.edit-budget-btn').forEach(button => {
-            button.onclick = (e) => editBudget(parseInt(e.currentTarget.dataset.id));
-        });
-        document.querySelectorAll('.delete-budget-btn').forEach(button => {
-            button.onclick = (e) => deleteBudget(parseInt(e.currentTarget.dataset.id));
-        });
-    }
-
 
     // --- 3. EVENT LISTENERS (Chamadas para botões e formulários globais) ---
 
@@ -947,6 +968,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         transactionForm.reset();
         await populateCategorySelect();
         categorySelect.value = '';
+        dateInput.value = new Date().toISOString().split('T')[0]; // Preenche a data com o dia atual
         transactionFormModal.classList.add('is-visible');
         console.log("DEBUG: Classe 'is-visible' adicionada ao modal de transação.");
     };

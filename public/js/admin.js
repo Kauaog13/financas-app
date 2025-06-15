@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function checkAdminAuth() {
         const token = localStorage.getItem('token');
         if (!token) {
-            window.location.href = '/login'; // Corrigido: Redireciona para a rota /login
+            window.location.href = '/login'; // Redireciona para a rota /login
             return;
         }
         try {
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if (!response.ok) {
                 localStorage.removeItem('token');
-                window.location.href = '/login'; // Corrigido: Redireciona para a rota /login
+                window.location.href = '/login'; // Redireciona para a rota /login
                 return;
             }
             const userData = await response.json();
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Erro ao verificar token de admin:', error);
             localStorage.removeItem('token');
-            window.location.href = '/login'; // Corrigido: Redireciona para a rota /login
+            window.location.href = '/login'; // Redireciona para a rota /login
         }
     }
 
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Event Listeners
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('token');
-        window.location.href = '/login'; // CORRIGIDO AQUI: Redireciona para a rota /login
+        window.location.href = '/login';
     });
 
     backToAppBtn.addEventListener('click', () => {

@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,16 +7,13 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="icon" type="image/gif" href="\favicon-financas-app.ico">
-</head>
-
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"> </head>
 <body>
     <header class="header">
         <div class="container">
-            <h1>Controle de Finanças <i class="fas fa-wallet"></i></h1>
+            <h1>Controle de Finanças <i class="fas fa-wallet"></i> <i class="fas fa-chart-pie"></i></h1>
             <nav>
-                <button id="adminPanelBtn" class="btn btn-primary" style="display: none;"><i
-                        class="fas fa-user-shield"></i> Painel Admin</button>
+                <button id="adminPanelBtn" class="btn btn-primary" style="display: none;"><i class="fas fa-user-shield"></i> Painel Admin</button>
                 <button id="darkModeToggle" class="btn btn-secondary"><i class="fas fa-moon"></i></button>
                 <button id="logoutBtn" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i> Sair</button>
             </nav>
@@ -76,12 +72,9 @@
 
         <section class="transactions-section card-base">
             <h2>Minhas Transações <i class="fas fa-exchange-alt"></i></h2>
-            <button id="addTransactionBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Adicionar Nova
-                Transação</button>
-            <button id="manageCategoriesBtn" class="btn btn-info"><i class="fas fa-tags"></i> Gerenciar
-                Categorias</button>
-            <button id="exportTransactionsBtn" class="btn btn-primary"><i class="fas fa-file-export"></i> Exportar
-                Transações</button>
+            <button id="addTransactionBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Adicionar Nova Transação</button>
+            <button id="manageCategoriesBtn" class="btn btn-info"><i class="fas fa-tags"></i> Gerenciar Categorias</button>
+            <button id="exportTransactionsBtn" class="btn btn-primary"><i class="fas fa-file-export"></i> Exportar Transações</button>
 
             <div id="transactionFormModal" class="modal">
                 <div class="modal-content">
@@ -107,14 +100,13 @@
                         <div class="form-group">
                             <label for="category"><i class="fas fa-tag"></i> Categoria:</label>
                             <select id="category" required>
-                            </select>
+                                </select>
                         </div>
                         <div class="form-group">
                             <label for="date"><i class="fas fa-calendar-alt"></i> Data:</label>
                             <input type="date" id="date" required>
                         </div>
-                        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Salvar
-                            Transação</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Salvar Transação</button>
                     </form>
                 </div>
             </div>
@@ -136,13 +128,12 @@
                                 <option value="expense">Despesa</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-success"><i class="fas fa-plus-circle"></i> Salvar
-                            Categoria</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-plus-circle"></i> Salvar Categoria</button>
                     </form>
                     <hr>
                     <h4>Minhas Categorias</h4>
                     <ul id="categoryList" class="category-list">
-                    </ul>
+                        </ul>
                 </div>
             </div>
 
@@ -155,29 +146,27 @@
                         <div class="form-group">
                             <label for="budgetCategory"><i class="fas fa-tag"></i> Categoria:</label>
                             <select id="budgetCategory" required>
-                            </select>
+                                </select>
                         </div>
                         <div class="form-group">
-                            <label for="budgetAmountLimit"><i class="fas fa-dollar-sign"></i> Limite de Gasto
-                                (R$):</label>
+                            <label for="budgetAmountLimit"><i class="fas fa-dollar-sign"></i> Limite de Gasto (R$):</label>
                             <input type="number" id="budgetAmountLimit" step="0.01" required placeholder="0.00">
                         </div>
                         <div class="form-group">
                             <label for="budgetMonth"><i class="fas fa-calendar-alt"></i> Mês:</label>
                             <select id="budgetMonth" required>
-                            </select>
+                                </select>
                         </div>
                         <div class="form-group">
                             <label for="budgetYear"><i class="fas fa-calendar"></i> Ano:</label>
                             <input type="number" id="budgetYear" required min="2000" max="2100" value="2025">
                         </div>
-                        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Salvar
-                            Orçamento</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Salvar Orçamento</button>
                     </form>
                     <hr>
                     <h4>Orçamentos Definidos</h4>
                     <ul id="budgetList" class="budget-list">
-                    </ul>
+                        </ul>
                 </div>
             </div>
 
@@ -192,15 +181,13 @@
                 </select>
                 <select id="filterCategory">
                     <option value="">Todas as Categorias</option>
-                </select>
+                    </select>
                 <label for="filterStartDate"><i class="fas fa-calendar-alt"></i> De:</label>
                 <input type="date" id="filterStartDate">
                 <label for="filterEndDate"><i class="fas fa-calendar-alt"></i> Até:</label>
                 <input type="date" id="filterEndDate">
-                <button id="applyFiltersBtn" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Aplicar
-                    Filtros</button>
-                <button id="resetFiltersBtn" class="btn btn-secondary btn-sm"><i class="fas fa-redo"></i> Limpar
-                    Filtros</button>
+                <button id="applyFiltersBtn" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Aplicar Filtros</button>
+                <button id="resetFiltersBtn" class="btn btn-secondary btn-sm"><i class="fas fa-redo"></i> Limpar Filtros</button>
                 <select id="sortType">
                     <option value="date-desc">Data (Mais Recente)</option>
                     <option value="date-asc">Data (Mais Antiga)</option>
@@ -210,11 +197,10 @@
             </div>
 
             <ul id="transactionList" class="transaction-list">
-            </ul>
+                </ul>
         </section>
     </main>
 
     <script src="js/app.js"></script>
 </body>
-
 </html>

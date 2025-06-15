@@ -44,9 +44,9 @@ body.dark-mode {
     --button-gradient-start: #17a2b8;
     --button-gradient-end: #138496;
 
-    --overlay-bg-start: #17a2b8; /* Cor de sobreposição */
-    --overlay-bg-end: #138496; /* Cor de sobreposição */
-    --overlay-text-color: #f8f9fa; /* Cor do texto de sobreposição */
+    --overlay-bg-start: #17a2b8;
+    --overlay-bg-end: #138496;
+    --overlay-text-color: #f8f9fa;
 
     --box-shadow-main: 0 14px 28px rgba(0,0,0,0.4), 0 10px 10px rgba(0,0,0,0.3); /* Sombra mais escura */
 }
@@ -335,6 +335,119 @@ label i {
 button i {
     font-size: 1rem;
 }
+
+/* --- Estilos para os novos modais (Esqueceu Senha / Redefinir Senha) --- */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6); /* Fundo mais escuro */
+    display: none; /* Começa oculto */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.is-visible {
+    display: flex; /* Torna visível */
+}
+
+.modal-content {
+    background-color: var(--card-background-color); /* Usa a cor do card do tema de auth */
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: var(--box-shadow-main);
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    text-align: center;
+    transform: translateY(-50px); /* Efeito de entrada */
+    transition: transform 0.3s ease-out;
+}
+
+.modal.is-visible .modal-content {
+    transform: translateY(0);
+}
+
+.close-button-forgot-password,
+.close-button-reset-password {
+    color: var(--text-color-secondary);
+    font-size: 1.8rem;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.close-button-forgot-password:hover,
+.close-button-reset-password:hover {
+    color: var(--text-color-primary);
+}
+
+.modal-content h3 {
+    color: var(--button-bg-color); /* Cor dos títulos do modal */
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.modal-content p {
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    color: var(--text-color-primary);
+}
+
+.modal-content .form-group {
+    margin-bottom: 15px;
+}
+
+.modal-content label {
+    display: block;
+    text-align: left;
+    margin-bottom: 5px;
+    color: var(--text-color-primary);
+}
+
+.modal-content input[type="email"],
+.modal-content input[type="password"] {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: 1px solid var(--input-border-color);
+    background-color: var(--input-bg-color);
+    color: var(--text-color-primary);
+}
+
+.modal-content .btn {
+    width: 100%;
+    margin-top: 15px;
+}
+
+/* Dark mode adjustments for modals */
+body.dark-mode .modal-content {
+    background-color: var(--card-background-color); /* Usar dark card color */
+    box-shadow: var(--box-shadow-main);
+}
+body.dark-mode .modal-content h3 {
+    color: var(--button-bg-color); /* Manter a cor do botão para o título */
+}
+body.dark-mode .modal-content p,
+body.dark-mode .modal-content label {
+    color: var(--text-color-primary); /* Texto principal branco no dark mode */
+}
+body.dark-mode .modal-content input {
+    background-color: var(--input-bg-color);
+    color: var(--text-color-primary);
+    border-color: var(--input-border-color);
+}
+
 
 /* --- Responsividade --- */
 @media (max-width: 768px) {
