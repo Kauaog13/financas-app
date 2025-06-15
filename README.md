@@ -77,7 +77,7 @@ Para configurar e rodar o projeto em sua máquina local:
 
 1.  **Clone o repositório:**
     ```bash
-    git clone https://github.com/Kauaog13/financas-app
+    git clone https://github.com/Kauaog13/financas-app.git
     cd financas-app
     ```
 2.  **Instale as dependências do Backend:**
